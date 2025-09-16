@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import App from "@/components/App";
 import { createSupabaseServerClient } from "@/lib/supabaseServer";
+import { UserMetadata } from "@supabase/supabase-js";
 
 export default async function DashboardPage() {
   const supabase = createSupabaseServerClient();
@@ -20,7 +21,7 @@ export default async function DashboardPage() {
     .single();
 
   const displayName =
-    profile?.name || (session.user.user_metadata as any)?.name || session.user.email;
+    profile?.name || (session.user.user_metadata as UserMetadata  )?.name || session.user.email;
 
   return <App displayName={displayName} />;
 }

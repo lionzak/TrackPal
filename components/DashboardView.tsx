@@ -13,7 +13,7 @@ const DashboardView: React.FC<AppProps> = ({ displayName }) => {
                     Welcome back, {displayName.split(" ")[0]}!
                 </h1>
                 <p className="text-sm sm:text-base ">
-                    Ready to crush today's goals?
+                    Ready to crush today&apos;s goals?
                 </p>
             </div>
 

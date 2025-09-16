@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { User, Mail, Lock } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 const RegisterPage = () => {
     const router = useRouter();
@@ -68,6 +69,8 @@ const RegisterPage = () => {
 
             // Redirect after registration
             router.push("/dashboard");
+            toast.success("Logged in successfully!");
+
         }
 
         setLoading(false);

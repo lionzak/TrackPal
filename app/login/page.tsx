@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Mail, Lock } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 const LoginPage = () => {
   const router = useRouter();
@@ -36,6 +37,7 @@ const LoginPage = () => {
       setError(error.message);
     } else {
       router.push("/dashboard");
+      toast.success("Logged in successfully!");
     }
     setLoading(false);
   };

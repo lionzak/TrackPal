@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import Link from "next/link";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -22,12 +23,12 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-gradient-to-r from-blue-500 to-purple-600 relative">
-      <a
+      <Link
         href="/"
         className="absolute top-8 left-8 text-white  rounded px-3 py-2 hover:bg-blue-800 transition flex items-center"
       >
         &#8592; Back
-      </a>
+      </Link>
       <form onSubmit={handleReset} className="space-y-4">
         <h2 className="text-xl font-bold">Forgot Password</h2>
         <input

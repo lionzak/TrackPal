@@ -159,7 +159,7 @@ const RegisterPage = () => {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-lg font-medium hover:opacity-90 transition-all shadow-md"
+                        className="hover:cursor-pointer w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-lg font-medium hover:opacity-90 transition-all shadow-md"
                     >
                         {loading ? "Registering..." : "Register"}
                     </button>

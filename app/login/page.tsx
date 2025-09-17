@@ -82,8 +82,10 @@ const LoginPage = () => {
                 id="password"
                 name="password"
                 required
-                className="pl-10 block w-full border border-gray-300 rounded-lg p-3 text-black focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition"
+                className="pl-10 mb-2 block w-full border border-gray-300 rounded-lg p-3 text-black focus:border-blue-500 focus:ring-2 focus:ring-blue-500 transition"
               />
+              <a href="/forgot-password" className="text-blue-600 hover:underline"><p>Forget Password</p></a>
+
             </div>
           </div>
 
@@ -92,10 +94,11 @@ const LoginPage = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-lg font-medium hover:opacity-90 transition-all shadow-md"
+            className="hover:cursor-pointer w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-lg font-medium hover:opacity-90 transition-all shadow-md"
           >
             {loading ? "Logging in..." : "Login"}
           </button>
+
 
           <p className="text-sm text-center text-gray-500 mt-4">
             Don&apos;t have an account?{" "}

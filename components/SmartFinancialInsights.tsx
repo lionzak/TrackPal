@@ -1,9 +1,9 @@
 "use client";
 
-import { getMonthlySummary } from "@/utils/HelperFunc";
+import { getMonthlySummary, Transaction } from "@/utils/HelperFunc";
 import React, { useState } from "react";
 
-export const SmartFinancialInsights = ({ transactions }: { transactions: any[] }) => {
+export const SmartFinancialInsights = ({ transactions }: { transactions: Transaction[] }) => {
   const [insights, setInsights] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 

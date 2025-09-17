@@ -6,6 +6,8 @@ import DoughnutChart from "./DoughnutChart";
 import { formatDate, getSumByCategory, getTotalBalance, Transaction } from "@/utils/HelperFunc";
 import { supabase } from "@/lib/supabaseClient";
 import TransactionFilter from "./TransactionFilter";
+import TransactionEditingModal from "./TransactionEditingModal";
+import { SmartFinancialInsights } from "./SmartFinancialInsights";
 
 const FinanceView: React.FC = () => {
     // State for transactions
@@ -44,27 +46,25 @@ const FinanceView: React.FC = () => {
             return;
         }
 
-        // get the logged-in user
         const { data: { user }, error: userError } = await supabase.auth.getUser();
         if (userError || !user) {
             console.error("No user logged in:", userError);
             return;
         }
 
+        // Insert and return the generated row including id
         const { data, error } = await supabase
             .from("transactions")
-            .insert([
-                { ...formData, user_id: user.id } // now user.id is a real uuid, not a promise
-            ]);
+            .insert([{ ...formData, user_id: user.id }])
+            .select(); // important to get the inserted row with id
 
         if (error) {
             console.error("Error inserting transaction:", error);
-        } else {
-            console.log("Transaction inserted:", data);
-            setTransactions((prev) => [...prev, formData]);
+        } else if (data && data.length > 0) {
+            const newTransaction: Transaction = data[0]; // contains id
+            setTransactions((prev) => [...prev, newTransaction]);
             setFormData({ date: "", source: "", category: "Income", amount: 0, notes: "" });
         }
-
     };
 
     const fetchTransactions = async () => {
@@ -104,6 +104,51 @@ const FinanceView: React.FC = () => {
         const matchDate = filters.date ? formatDate(t.date) === filters.date : true;
         return matchCategory && matchSource && matchDate;
     });
+
+
+    // State for modal
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+
+    const handleEditTransaction = (transaction: Transaction) => {
+        setEditingTransaction(transaction);
+        setFormData(transaction); // fill the form
+        setIsEditModalOpen(true);
+    };
+
+
+    const handleUpdateTransaction = async () => {
+        if (!editingTransaction) return;
+
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError || !user) {
+            console.error("No user logged in:", userError);
+            return;
+        }
+
+        const { data, error } = await supabase
+            .from("transactions")
+            .update({
+                date: formData.date,
+                source: formData.source,
+                category: formData.category,
+                amount: formData.amount,
+                notes: formData.notes
+            })
+            .eq("id", editingTransaction.id) // use the id to update
+            .select(); // return updated row
+
+        if (error) {
+            console.error("Error updating transaction:", error);
+        } else if (data && data.length > 0) {
+            const updatedTransaction: Transaction = data[0];
+            setTransactions((prev) =>
+                prev.map((t) => (t.id === updatedTransaction.id ? updatedTransaction : t))
+            );
+            setIsEditModalOpen(false);
+            setEditingTransaction(null);
+        }
+    };
 
 
     const income = getSumByCategory(transactions, "Income");
@@ -247,10 +292,11 @@ const FinanceView: React.FC = () => {
 
             {/* Filters */}
             <TransactionFilter filters={filters} setFilters={setFilters} />
-            
+
 
             {/* Recent Transactions */}
-            <TransactionTable transactions={filteredTransactions} />
+            <TransactionTable transactions={filteredTransactions} onEditTransaction={handleEditTransaction} />
+
 
             {/* Financial Overview */}
             <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -264,6 +310,21 @@ const FinanceView: React.FC = () => {
                     />
                 </div>
             </div>
+
+            <SmartFinancialInsights transactions={filteredTransactions} />
+            
+            {isEditModalOpen && editingTransaction && (
+                <TransactionEditingModal
+                    formData={formData}                // use the form state
+                    setFormData={setFormData}          // allow changes
+                    setIsEditModalOpen={setIsEditModalOpen}
+                    handleChange={handleChange}
+                    handleDropdownChange={handleDropdownChange}
+                    handleUpdateTransaction={handleUpdateTransaction}
+                />
+            )}
+
+
         </div>
     );
 };

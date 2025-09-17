@@ -3,44 +3,13 @@ import { autoTable } from "jspdf-autotable";
 import { unparse } from "papaparse";
 
 export interface Transaction {
+  id?: number;
   date: string;
   source: string;
   category: "Income" | "Spending" | "Saving" | "Investing";
   amount: number;
   notes: string;
 }
-
-// Sample data that matches your screenshot
-export const sampleTransactions: Transaction[] = [
-  {
-    date: "2025-09-01",
-    source: "Allowance",
-    category: "Income",
-    amount: 50,
-    notes: "Weekly allowance",
-  },
-  {
-    date: "2025-09-01",
-    source: "Business",
-    category: "Spending",
-    amount: 15,
-    notes: "Domain registration",
-  },
-  {
-    date: "2025-08-30",
-    source: "Gift",
-    category: "Saving",
-    amount: 25,
-    notes: "Birthday money",
-  },
-  {
-    date: "2025-08-31",
-    source: "Salary",
-    category: "Investing",
-    amount: 25,
-    notes: "Bought some stocks in TSLA",
-  },
-];
 
 // Helper function to format currency
 export const formatCurrency = (amount: number): string => {
@@ -157,4 +126,21 @@ export const exportPDF = (transactions: Transaction[]) => {
 
   // Save file
   doc.save(`transactions_${new Date().toISOString().slice(0, 10)}.pdf`);
+};
+
+//Example function to summarize monthly totals
+export  const getMonthlySummary = (transactions: Transaction[]) => {
+  const summary: Record<string, { income: number; spending: number; savings: number; investing: number }> = {};
+
+  transactions.forEach(t => {
+    const month = new Date(t.date).toISOString().slice(0, 7); // "YYYY-MM"
+    if (!summary[month]) summary[month] = { income: 0, spending: 0, savings: 0, investing: 0 };
+
+    if (t.category === "Income") summary[month].income += t.amount;
+    else if (t.category === "Spending") summary[month].spending += t.amount;
+    else if (t.category === "Saving") summary[month].savings += t.amount;
+    else if (t.category === "Investing") summary[month].investing += t.amount;
+  });
+
+  return summary;
 };

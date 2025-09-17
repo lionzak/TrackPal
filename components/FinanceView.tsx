@@ -311,7 +311,7 @@ const FinanceView: React.FC = () => {
                 </div>
             </div>
 
-            <SmartFinancialInsights transactions={filteredTransactions} />
+            <SmartFinancialInsights transactions={transactions} />
             
             {isEditModalOpen && editingTransaction && (
                 <TransactionEditingModal

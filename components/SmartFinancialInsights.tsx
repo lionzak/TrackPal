@@ -15,6 +15,7 @@ export const SmartFinancialInsights = ({ transactions }: { transactions: Transac
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ summary: getMonthlySummary(transactions) }),
       });
+      console.log(getMonthlySummary(transactions));
 
       if (!res.ok) throw new Error("Failed to fetch insights");
 
@@ -28,6 +29,17 @@ export const SmartFinancialInsights = ({ transactions }: { transactions: Transac
       setLoading(false);
     }
   };
+
+  React.useEffect(() => {
+    if (transactions.length === 0) return; // wait until transactions exist
+
+    const timer = setTimeout(() => {
+      fetchInsights();
+    }, 2000); // 2 seconds delay
+
+    return () => clearTimeout(timer);
+  }, [transactions]);
+
 
   return (
     <div className="bg-yellow-50 p-6 rounded-xl shadow-md  mx-auto text-gray-900">

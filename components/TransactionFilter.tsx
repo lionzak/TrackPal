@@ -5,7 +5,11 @@ const TransactionFilter = ({ filters, setFilters }: {
         category: string,
         source: string,
         date: string,
-    }; setFilters: React.Dispatch<React.SetStateAction<any>>;
+    }; setFilters: React.Dispatch<React.SetStateAction<{
+        category: string,
+        source: string,
+        date: string,
+    }>>;
 }) => {
     return (
         <div className="flex flex-col sm:flex-row gap-4 mb-4">
@@ -36,8 +40,9 @@ const TransactionFilter = ({ filters, setFilters }: {
                 type="date"
                 className="border border-gray-300 rounded-lg px-3 py-2 text-black"
                 value={filters.date}
-                onChange={(e) => {setFilters((prev: typeof filters) => ({ ...prev, date: e.target.value }))
-        }}
+                onChange={(e) => {
+                    setFilters((prev: typeof filters) => ({ ...prev, date: e.target.value }))
+                }}
             />
         </div>
     )

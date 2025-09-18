@@ -71,6 +71,7 @@ const BudgetTracker = () => {
     return tips.length > 0 ? tips : ['Keep tracking your expenses to maintain good financial habits!'];
   };
 
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -237,7 +238,7 @@ const BudgetTracker = () => {
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value: any) => [`$${value}`, 'Spent']} />
+                    <Tooltip formatter={(value: NewType) => [`$${value}`, 'Spent']} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -300,11 +301,11 @@ const BudgetTracker = () => {
             <h3 className="text-lg font-semibold text-gray-900 mb-6">Spending Trends</h3>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={trendData}>
+                <LineChart data={trendData as { month: string; budget: number; spent: number }[]}>
                   <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
                   <XAxis dataKey="month" />
                   <YAxis />
-                  <Tooltip formatter={(value: any) => [`$${value}`, '']} />
+                  <Tooltip formatter={(value: number) => [`$${value}`, '']} />
                   <Legend />
                   <Line 
                     type="monotone" 

@@ -322,8 +322,6 @@ const FinanceView: React.FC = () => {
             {/*Smart Insights */}
             <SmartFinancialInsights trendData={trendData}
                 spendingDistributionData={spendingDistributionData} transactions={transactions}     />
-                
-        
 
             {isEditModalOpen && editingTransaction && (
                 <TransactionEditingModal

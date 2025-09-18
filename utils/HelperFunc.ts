@@ -130,12 +130,16 @@ export const exportPDF = (transactions: Transaction[]) => {
 };
 
 //Example function to summarize monthly totals
-export  const getMonthlySummary = (transactions: Transaction[]) => {
-  const summary: Record<string, { income: number; spending: number; savings: number; investing: number }> = {};
+export const getMonthlySummary = (transactions: Transaction[]) => {
+  const summary: Record<
+    string,
+    { income: number; spending: number; savings: number; investing: number }
+  > = {};
 
-  transactions.forEach(t => {
+  transactions.forEach((t) => {
     const month = new Date(t.date).toISOString().slice(0, 7); // "YYYY-MM"
-    if (!summary[month]) summary[month] = { income: 0, spending: 0, savings: 0, investing: 0 };
+    if (!summary[month])
+      summary[month] = { income: 0, spending: 0, savings: 0, investing: 0 };
 
     if (t.category === "Income") summary[month].income += t.amount;
     else if (t.category === "Spending") summary[month].spending += t.amount;
@@ -146,10 +150,12 @@ export  const getMonthlySummary = (transactions: Transaction[]) => {
   return summary;
 };
 
-
 export const getTotalSpendingBySource = async (source: string) => {
   // Get the logged-in user
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
   if (userError || !user) {
     console.error("No user logged in:", userError);
     return 0;
@@ -171,4 +177,46 @@ export const getTotalSpendingBySource = async (source: string) => {
   // Calculate total
   const total = data?.reduce((sum, t) => sum + (t.amount || 0), 0) || 0;
   return total;
+};
+
+export const setMonthlyBudgetSupabase = async (
+  userId: string,
+  amount: number
+) => {
+  const monthYear = new Date().toISOString().slice(0, 7); // "2025-09"
+
+  const { data, error } = await supabase
+    .from("monthly_budgets")
+    .upsert(
+      { user_id: userId, amount, month_year: monthYear },
+      { onConflict: "user_id,month_year" }
+    )
+    .select();
+
+  if (error) {
+    console.error("Error setting monthly budget:", error);
+    return null;
+  }
+  return data?.[0] ?? null;
+};
+
+export const getMonthlyBudget = async (userId: string) => {
+  const monthYear = new Date().toISOString().slice(0, 7);
+
+  const { data, error } = await supabase
+    .from("monthly_budgets")
+    .select("amount, user_id, month_year")
+    .eq("user_id", userId)
+    .eq("month_year", monthYear)
+    .maybeSingle();
+
+  console.log("Fetched monthly budget:", data, error);
+  console.log("Saving budget:", userId, monthYear, data?.amount);
+
+  if (error) {
+    console.error("Error fetching monthly budget:", error);
+    return null;
+  }
+
+  return data?.amount ?? 0;
 };

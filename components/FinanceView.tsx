@@ -1,17 +1,15 @@
 import { useEffect, useState } from "react";
 import TransactionTable from "./TransactionTable";
 import DoughnutChart from "./DoughnutChart";
-import { formatDate, getSumByCategory, getTotalBalance, Transaction } from "@/utils/HelperFunc";
+import { formatDate, getMonthlyBudget, getSumByCategory, getTotalBalance, setMonthlyBudgetSupabase, Transaction } from "@/utils/HelperFunc";
 import { supabase } from "@/lib/supabaseClient";
 import TransactionFilter from "./TransactionFilter";
 import TransactionEditingModal from "./TransactionEditingModal";
-import { SmartFinancialInsights } from "./SmartFinancialInsights";
 import FinancialCards from "./FinancialCards";
 import TransactionForm from "./TransactionForm";
 import AddBudgetCategoryModal from "./AddBudgetCategoryModal";
 import Image from "next/image";
-import { PieChart } from "recharts";
-import BudgetDistributionPieChart from "./BudgetDistributionPieChart";
+import BudgetOverviewTab from "./BudgetOverviewTab";
 
 const FinanceView: React.FC = () => {
     // State for transactions
@@ -45,10 +43,24 @@ const FinanceView: React.FC = () => {
     const [budget, setBudget] = useState<{ category: string; budget: number }[]>([]);
     const [budgetTotals, setBudgetTotals] = useState<Record<string, number>>({});
 
+    const [monthlyBudget, setMonthlyBudget] = useState<number>(0);
+    const [monthlyBudgetInput, setMonthlyBudgetInput] = useState<string>("");   // ✅ input field
+
+
+    // --- Helper to get current user ---
+    const getCurrentUser = async () => {
+        const { data: { user }, error } = await supabase.auth.getUser();
+        if (error || !user) {
+            console.error(error);
+            return null;
+        }
+        return user;
+    };
+
     // --- Fetch transactions from Supabase ---
     const fetchTransactions = async () => {
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError || !user) return console.error(userError);
+        const user = await getCurrentUser();
+        if (!user) return;
 
         const { data, error } = await supabase
             .from("transactions")
@@ -61,14 +73,15 @@ const FinanceView: React.FC = () => {
 
     // --- Fetch budget from Supabase ---
     const fetchBudget = async () => {
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError || !user) return console.error(userError);
+
+        const user = await getCurrentUser();
+        if (!user) return;
 
         const { data, error } = await supabase
             .from("budgets")
             .select("*")
-            .eq("user_id", user.id);
-
+            .eq("user_id", user.id)
+            
         if (error) console.error(error);
         else if (data) setBudget(data);
     };
@@ -86,7 +99,7 @@ const FinanceView: React.FC = () => {
                 .filter(
                     t =>
                         t.source.trim().toLowerCase() === item.category.trim().toLowerCase() &&
-                        t.category === "Spending"
+                        t.category === "Spending" && t.date.startsWith(new Date().toISOString().slice(0, 7)) // current month
                 )
                 .reduce((sum, t) => sum + t.amount, 0);
         }
@@ -95,6 +108,13 @@ const FinanceView: React.FC = () => {
 
     useEffect(() => {
         fetchBudgetTotals();
+        const fetchMonthlyBudget = async () => {
+            const user = await getCurrentUser();
+            if (!user) return;
+            const monthlyBudgetValue = await getMonthlyBudget(user.id);
+            setMonthlyBudget(monthlyBudgetValue);
+        };
+        fetchMonthlyBudget();
     }, [budget, transactions]);
 
     // --- Transaction form handlers ---
@@ -116,8 +136,8 @@ const FinanceView: React.FC = () => {
             return;
         }
 
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError || !user) return console.error(userError);
+        const user = await getCurrentUser();
+        if (!user) return;
 
         const { data, error } = await supabase
             .from("transactions")
@@ -140,8 +160,8 @@ const FinanceView: React.FC = () => {
     const handleUpdateTransaction = async () => {
         if (!editingTransaction) return;
 
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError || !user) return console.error(userError);
+        const user = await getCurrentUser();
+        if (!user) return;
 
         const { data, error } = await supabase
             .from("transactions")
@@ -160,8 +180,8 @@ const FinanceView: React.FC = () => {
     };
 
     const deleteTransaction = async (transactionId: number) => {
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError || !user) return console.error(userError);
+        const user = await getCurrentUser();
+        if (!user) return;
 
         const { error } = await supabase
             .from("transactions")
@@ -176,7 +196,7 @@ const FinanceView: React.FC = () => {
     const handleAddCategory = async () => {
         if (!newCategory.category || newCategory.budget <= 0) return;
 
-        const { data: { user } } = await supabase.auth.getUser();
+        const user = await getCurrentUser();
         if (!user) return;
 
         const { data, error } = await supabase
@@ -266,27 +286,73 @@ const FinanceView: React.FC = () => {
             <div className="bg-white rounded-lg shadow overflow-hidden">
                 <div className="px-4 py-5 sm:p-6 text-white">
                     <h3 className="text-lg font-bold text-gray-900 mb-4">Budgeting</h3>
+                    {monthlyBudget <= 0 && (
+
+                        <form
+                            onSubmit={async (e) => {
+                                e.preventDefault();
+                                const user = await getCurrentUser();
+                                if (!user) return;
+
+                                const amount = Number(monthlyBudgetInput);
+                                if (!amount || amount <= 0) {
+                                    alert("Enter a valid amount");
+                                    return;
+                                }
+
+                                const savedBudget = await setMonthlyBudgetSupabase(user.id, amount);
+                                if (savedBudget) {
+                                    setMonthlyBudget(savedBudget.amount); // ✅ update saved budget
+                                    setMonthlyBudgetInput(""); // clear input
+                                } else {
+                                    alert("Failed to set budget. Please try again.");
+                                }
+                            }}
+                            className="flex gap-2 pb-4"
+                        >
+                            <input
+                                type="number"
+                                min={1}
+                                value={monthlyBudgetInput}  // ✅ controlled input
+                                onChange={(e) => setMonthlyBudgetInput(e.target.value)}
+                                placeholder="Enter monthly budget"
+                                className="border rounded px-3 py-1 text-black"
+                            />
+
+                            <button
+                                type="submit"
+                                className="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700 hover:cursor-pointer transition"
+                            >
+                                Set Budget
+                            </button>
+                        </form>
+
+                    )}
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                         <div className="shadow-md p-5 rounded-lg bg-gradient-to-r from-green-500 to-green-600">
                             <h4 className="font-medium  ">Total Budget</h4>
-                            <p className="text-lg font-bold">$asd</p>
+                            <p className="text-lg font-bold">${monthlyBudget}</p>
                         </div>
                         <div className="shadow-md p-5 rounded-lg bg-gradient-to-r from-red-400 to-red-600">
                             <h4 className="font-medium">Total Spent</h4>
-                            <p className="text-lg font-bold">$asds</p>
+                            <p className="text-lg font-bold">
+                                ${Object.values(budgetTotals).reduce((sum, val) => sum + val, 0)}
+                            </p>
                         </div>
                         <div className="shadow-md p-5 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600">
                             <h4 className="font-medium">Total Remaining</h4>
-                            <p className="text-lg font-bold">$asds</p>
+                            <p className="text-lg font-bold">${monthlyBudget - Object.values(budgetTotals).reduce((sum, val) => sum + val, 0)}</p>
+                            <p className="text-sm font-md">{((monthlyBudget - Object.values(budgetTotals).reduce((sum, val) => sum + val, 0)) / monthlyBudget * 100).toFixed(0)}%</p>
                         </div>
                     </div>
                     {/* Navigation Tabs */}
                     <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg mt-8">
-                        {['overview', 'categories', 'trends', 'insights'].map((tab) => (
+                        {['overview',  'trends'].map((tab) => (
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
-                                className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${activeTab === tab
+                                className={`hover:cursor-pointer flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${activeTab === tab
                                     ? 'bg-white text-blue-600 shadow-sm'
                                     : 'text-gray-600 hover:bg-gray-400'
                                     }`}
@@ -296,64 +362,11 @@ const FinanceView: React.FC = () => {
                         ))}
                     </div>
                     {activeTab === 'overview' && (
-                        <div className="mt-4 text-gray-700">
-                            <div className="shadow-md">
-                                <div className="flex justify-between items-center p-4 bg-white rounded-t-lg">
-                                    <h3 className="text-lg font-bold text-gray-900 mb-4">Budget Progress</h3>
-                                    <button onClick={() => setIsAddCategoryModalOpen(true)} className=" bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700 transition-colors hover:cursor-pointer">
-                                        + Add Category
-                                    </button>
-
-
-                                </div>
-
-                                <div className="flex flex-col sm:flex-row w-full">
-                                    <div className="sm:w-1/2 max-h-96 overflow-y-auto min-w-0">
-                                        {budget.map((item) => {
-                                            const totalSpent = budgetTotals[item.category] || 0;
-                                            const percentage = Math.min((totalSpent / item.budget) * 100, 100);
-                                            return (
-                                                <div key={item.category} className="m-5 mb-4">
-                                                    <div className="flex justify-between">
-                                                        <span className=" text-xl font-bold">{item.category}</span>
-                                                        <div>
-                                                            <span className="font-medium text-black">${totalSpent}</span>
-                                                            <span> / </span>
-                                                            <span className="font-medium text-black">${item.budget}</span>
-                                                            <div className="text-end text-gray-500 text-sm"><span>{percentage.toFixed(0)}%</span></div>
-                                                        </div>
-                                                    </div>
-                                                    <div className="relative pt-1">
-                                                        <div className="flex h-2 mb-4 rounded bg-gray-200">
-                                                            <div
-                                                                className={`flex h-2 rounded ${percentage >= 90 ? "bg-red-600" : percentage >= 75 ? "bg-yellow-500" : "bg-green-500"}`}
-                                                                style={{ width: `${percentage}%` }}
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                    <div className="w-full sm:w-1/2 max-h-96 flex flex-col mt-8 sm:mt-0">
-                                        {/* Title aligned left */}
-                                        <h3 className="text-lg font-bold text-gray-900 mb-4 text-left">
-                                            Spending Distribution
-                                        </h3>
-                                        {/* Chart centered */}
-                                        <div className="flex-1 flex items-center justify-center">
-                                            <div className="w-full h-64">
-                                                <BudgetDistributionPieChart
-                                                    spendingDistributionData={spendingDistributionData}
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-
-                            </div>
-                        </div>)}
+                        <BudgetOverviewTab budget={budget} budgetTotals={budgetTotals} setIsAddCategoryModalOpen={setIsAddCategoryModalOpen} spendingDistributionData={spendingDistributionData} />
+                    )}
+                    {activeTab === 'trends' && (
+                        <></>
+                    )}
                 </div>
             </div>
 
@@ -366,8 +379,7 @@ const FinanceView: React.FC = () => {
                     handleChange={handleChange}
                     handleDropdownChange={handleDropdownChange}
                     handleUpdateTransaction={handleUpdateTransaction}
-                />
-            )}
+                />)}
 
             {/* Add Category Modal */}
             {isAddCategoryModalOpen && <AddBudgetCategoryModal isAddCategoryModalOpen={isAddCategoryModalOpen} setIsAddCategoryModalOpen={setIsAddCategoryModalOpen} newCategory={newCategory} setNewCategory={setNewCategory} handleAddCategory={handleAddCategory} />}

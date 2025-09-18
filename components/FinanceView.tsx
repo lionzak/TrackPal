@@ -8,6 +8,8 @@ import { supabase } from "@/lib/supabaseClient";
 import TransactionFilter from "./TransactionFilter";
 import TransactionEditingModal from "./TransactionEditingModal";
 import { SmartFinancialInsights } from "./SmartFinancialInsights";
+import FinancialCards from "./FinancialCards";
+import TransactionForm from "./TransactionForm";
 
 const FinanceView: React.FC = () => {
     // State for transactions
@@ -150,6 +152,25 @@ const FinanceView: React.FC = () => {
         }
     };
 
+    const deleteTransaction = async (transactionId: number) => {
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError || !user) {
+            console.error("No user logged in:", userError);
+            return;
+        }
+
+        const { data, error } = await supabase
+            .from("transactions")
+            .delete()
+            .eq("id", transactionId)
+            .select();
+
+        if (error) {
+            console.error("Error deleting transaction:", error);
+        } else if (data && data.length > 0) {
+            setTransactions((prev) => prev.filter((t) => t.id !== transactionId));
+        }
+    };
 
     const income = getSumByCategory(transactions, "Income");
     const spendings = getSumByCategory(transactions, "Spending");
@@ -167,135 +188,27 @@ const FinanceView: React.FC = () => {
             </div>
 
             {/* Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 sm:gap-6">
-                {/* Total Balance */}
-                <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-lg shadow p-4 sm:p-6">
-                    <div className="flex items-center">
-                        <div className="flex-shrink-0">
-                            <div className="w-8 h-8 rounded-full flex items-center justify-center">
-                                <DollarSign color="white" />
-                            </div>
-                        </div>
-                        <div className="ml-4 flex-1">
-                            <div className="text-sm font-medium text-white truncate">Total Balance</div>
-                            <div className="text-lg sm:text-2xl font-bold text-white">
-                                ${totalBalance.toLocaleString()}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Total income */}
-                <div className="bg-gradient-to-r from-orange-400 to-amber-600 rounded-lg shadow p-4 sm:p-6 sm:col-span-2 lg:col-span-1">
-                    <div className="flex items-center">
-                        <div className="flex-shrink-0">
-                            <div className="w-8 h-8 rounded-full flex items-center justify-center">
-                                <Wallet color="white" />
-                            </div>
-                        </div>
-                        <div className="ml-4 flex-1">
-                            <div className="text-sm font-medium text-white truncate">Total Income</div>
-                            <div className="text-lg sm:text-2xl font-bold text-white">
-                                ${income.toLocaleString()}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Savings */}
-                <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg shadow p-4 sm:p-6">
-                    <div className="flex items-center">
-                        <div className="flex-shrink-0">
-                            <div className="w-8 h-8 rounded-full flex items-center justify-center">
-                                <PiggyBank color="white" />
-                            </div>
-                        </div>
-                        <div className="ml-4 flex-1">
-                            <div className="text-sm font-medium text-white truncate">Savings</div>
-                            <div className="text-lg sm:text-2xl font-bold text-white">
-                                ${savings.toLocaleString()}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Spendings */}
-                <div className="bg-gradient-to-r from-red-400 to-red-600 rounded-lg shadow p-4 sm:p-6 sm:col-span-2 lg:col-span-1">
-                    <div className="flex items-center">
-                        <div className="flex-shrink-0">
-                            <div className="w-8 h-8 rounded-full flex items-center justify-center">
-                                <Wallet color="white" />
-                            </div>
-                        </div>
-                        <div className="ml-4 flex-1">
-                            <div className="text-sm font-medium text-white truncate">Spending</div>
-                            <div className="text-lg sm:text-2xl font-bold text-white">
-                                ${spendings.toLocaleString()}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <FinancialCards
+                totalBalance={totalBalance}
+                income={income}
+                spendings={spendings}
+                savings={savings}
+            />
 
             {/* Add Transaction Form */}
-            <div className="bg-white rounded-lg shadow overflow-hidden">
-                <div className="px-4 py-5 sm:p-6 text-black">
-                    <h3 className="text-lg font-bold text-gray-900 mb-4">Add Transaction</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <input
-                            type="date"
-                            name="date"
-                            value={formData.date}
-                            onChange={handleChange}
-                            className="border border-gray-300 rounded-lg py-3 px-4 w-full"
-                        />
-                        <input
-                            type="text"
-                            name="source"
-                            placeholder="Source"
-                            value={formData.source}
-                            onChange={handleChange}
-                            className="border border-gray-300 rounded-lg py-3 px-4 w-full"
-                        />
-                        <TransactionDropdown
-                            title="Select Transaction Type"
-                            options={["Income", "Spending", "Saving", "Investing"]}
-                            optionsValue={["Income", "Spending", "Saving", "Investing"]}
-                            onChange={(value) => handleDropdownChange("category", value)}
-                        />
-                        <input
-                            type="number"
-                            name="amount"
-                            placeholder="Amount"
-                            value={formData.amount}
-                            onChange={handleChange}
-                            className="border border-gray-300 rounded-lg py-3 px-4 w-full"
-                        />
-                        <input
-                            type="text"
-                            name="notes"
-                            placeholder="Notes (optional)"
-                            value={formData.notes}
-                            onChange={handleChange}
-                            className="border border-gray-300 rounded-lg py-3 px-4 w-full sm:col-span-2"
-                        />
-                        <button
-                            type="button"
-                            onClick={handleAddTransaction}
-                            className="bg-blue-500 text-white rounded-lg py-3 px-4 hover:bg-blue-600 hover:cursor-pointer"
-                        >
-                            + Add Transaction
-                        </button>
-                    </div>
-                </div>
-            </div>
+            <TransactionForm
+                formData={formData}
+                handleChange={handleChange}
+                handleDropdownChange={handleDropdownChange}
+                handleAddTransaction={handleAddTransaction}
+            />
 
             {/* Filters */}
             <TransactionFilter filters={filters} setFilters={setFilters} />
 
 
             {/* Recent Transactions */}
-            <TransactionTable transactions={filteredTransactions} onEditTransaction={handleEditTransaction} />
+            <TransactionTable transactions={filteredTransactions} onEditTransaction={handleEditTransaction} deleteTransaction={deleteTransaction} />
 
 
             {/* Financial Overview */}

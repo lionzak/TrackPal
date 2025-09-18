@@ -1,16 +1,19 @@
 import { formatCurrency, formatDate, getAmountStyles, getCategoryStyles, Transaction } from '@/utils/HelperFunc';
 import React from 'react';
 import ExportMenu from './ExportMenu';
-import { LucideEdit } from 'lucide-react'; // or any icon library
+import { LucideEdit, Trash2 } from 'lucide-react'; // or any icon library
 
 interface TransactionTableProps {
   transactions: Transaction[];
   onEditTransaction?: (transaction: Transaction) => void; // callback for editing
+  deleteTransaction: (transactionId: number) => void; // callback for deleting
 }
+
 
 const TransactionTable: React.FC<TransactionTableProps> = ({
   transactions,
   onEditTransaction
+  , deleteTransaction
 }) => {
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
@@ -29,6 +32,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</th>
               <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Edit</th>
+              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Delete</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -49,6 +53,14 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                     onClick={() => onEditTransaction && onEditTransaction(transaction)}
                   >
                     <LucideEdit size={18} />
+                  </button>
+                </td>
+                <td className="px-6 py-4 text-center">
+                  <button
+                    className="text-red-500 hover:text-red-700 hover:cursor-pointer"
+                    onClick={() => transaction.id !== undefined && deleteTransaction(transaction.id)}
+                  >
+                    <Trash2 size={18} />
                   </button>
                 </td>
               </tr>

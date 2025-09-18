@@ -57,8 +57,6 @@ const BudgetOverviewTab = ({ budget, budgetTotals, setIsAddCategoryModalOpen, sp
                         </div>
                     </div>
                 </div>
-
-
             </div>
         </div>
     )

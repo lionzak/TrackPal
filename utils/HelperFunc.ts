@@ -220,3 +220,47 @@ export const getMonthlyBudget = async (userId: string) => {
 
   return data?.amount ?? 0;
 };
+
+export async function getMonthlyBudgets(userId: string) {
+  const { data, error } = await supabase
+    .from("monthly_budgets")
+    .select("month_year, amount")
+    .eq("user_id", userId)
+    .order("month_year");
+
+  if (error) {
+    console.error("Error fetching monthly budgets:", error);
+    return [];
+  }
+  return data; // [{ month_year: "2025-05", amount: 3400 }, ...]
+}
+
+
+export const fetchTrendData = async (userId: string, transactions: any[]) => {
+  // 1. Get monthly budgets
+  const budgets = await getMonthlyBudgets(userId);
+
+  // 2. Match each budget with spending
+  const trend = budgets.map((b) => {
+    const spent = transactions
+      .filter(
+        (t) => t.category === "Spending" && t.date.startsWith(b.month_year) // matches YYYY-MM
+      )
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    const monthLabel = new Date(b.month_year + "-01").toLocaleString(
+      "default",
+      {
+        month: "short",
+      }
+    );
+
+    return {
+      month: monthLabel,
+      budget: b.amount,
+      spent,
+    };
+  });
+
+  return trend;
+};

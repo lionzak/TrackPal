@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import TransactionTable from "./TransactionTable";
 import DoughnutChart from "./DoughnutChart";
-import { formatDate, getMonthlyBudget, getSumByCategory, getTotalBalance, setMonthlyBudgetSupabase, Transaction } from "@/utils/HelperFunc";
+import { fetchTrendData, formatDate, getMonthlyBudget, getSumByCategory, getTotalBalance, setMonthlyBudgetSupabase, Transaction } from "@/utils/HelperFunc";
 import { supabase } from "@/lib/supabaseClient";
 import TransactionFilter from "./TransactionFilter";
 import TransactionEditingModal from "./TransactionEditingModal";
@@ -10,6 +10,7 @@ import TransactionForm from "./TransactionForm";
 import AddBudgetCategoryModal from "./AddBudgetCategoryModal";
 import Image from "next/image";
 import BudgetOverviewTab from "./BudgetOverviewTab";
+import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 const FinanceView: React.FC = () => {
     // State for transactions
@@ -81,7 +82,7 @@ const FinanceView: React.FC = () => {
             .from("budgets")
             .select("*")
             .eq("user_id", user.id)
-            
+
         if (error) console.error(error);
         else if (data) setBudget(data);
     };
@@ -234,6 +235,25 @@ const FinanceView: React.FC = () => {
         return matchCategory && matchSource && matchDate;
     });
 
+    //trends
+    const [trendData, setTrendData] = useState<
+        { month: string; budget: number; spent: number }[]
+    >([]);
+
+    useEffect(() => {
+        const loadTrend = async () => {
+            const user = await getCurrentUser();
+            if (!user) return;
+
+            const trend = await fetchTrendData(user.id, transactions);
+            setTrendData(trend);
+        };
+
+        if (transactions.length > 0) {
+            loadTrend();
+        }
+    }, [transactions]);
+
 
 
     return (
@@ -285,7 +305,7 @@ const FinanceView: React.FC = () => {
             {/* Budgeting */}
             <div className="bg-white rounded-lg shadow overflow-hidden">
                 <div className="px-4 py-5 sm:p-6 text-white">
-                    <h3 className="text-lg font-bold text-gray-900 mb-4">Budgeting</h3>
+                    <h3 className="text-lg font-bold text-gray-900 mb-4">Budgeting For {new Date().toISOString().slice(0, 7)}</h3>
                     {monthlyBudget <= 0 && (
 
                         <form
@@ -348,7 +368,7 @@ const FinanceView: React.FC = () => {
                     </div>
                     {/* Navigation Tabs */}
                     <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg mt-8">
-                        {['overview',  'trends'].map((tab) => (
+                        {['overview', 'trends'].map((tab) => (
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
@@ -365,7 +385,32 @@ const FinanceView: React.FC = () => {
                         <BudgetOverviewTab budget={budget} budgetTotals={budgetTotals} setIsAddCategoryModalOpen={setIsAddCategoryModalOpen} spendingDistributionData={spendingDistributionData} />
                     )}
                     {activeTab === 'trends' && (
-                        <></>
+                        <div className="w-full h-96">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <LineChart data={trendData as { month: string; budget: number; spent: number }[]}>
+                                    <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                                    <XAxis dataKey="month" />
+                                    <YAxis />
+                                    <Tooltip formatter={(value: number) => [`$${value}`, '']} />
+                                    <Legend />
+                                    <Line
+                                        type="monotone"
+                                        dataKey="budget"
+                                        stroke="#6366f1"
+                                        strokeWidth={2}
+                                        name="Budget"
+                                        strokeDasharray="5 5"
+                                    />
+                                    <Line
+                                        type="monotone"
+                                        dataKey="spent"
+                                        stroke="#10b981"
+                                        strokeWidth={2}
+                                        name="Actual Spending"
+                                    />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        </div>
                     )}
                 </div>
             </div>

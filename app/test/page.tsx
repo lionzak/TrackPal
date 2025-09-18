@@ -92,7 +92,7 @@ const BudgetTracker = () => {
               <AlertTriangle className="text-orange-600" size={20} />
               <div className="ml-3">
                 <p className="text-sm text-orange-800">
-                  <span className="font-medium">Budget Alert:</span> You're approaching or exceeding limits in {getAlerts().length} categor{getAlerts().length === 1 ? 'y' : 'ies'}
+                  <span className="font-medium">Budget Alert:</span> You&apos;re approaching or exceeding limits in {getAlerts().length} categor{getAlerts().length === 1 ? 'y' : 'ies'}
                 </p>
               </div>
             </div>

@@ -425,7 +425,7 @@ const FinanceView: React.FC = () => {
             )}
 
             {/* Add Category Modal */}
-            {isAddCategoryModalOpen && <AddBudgetCategoryModal isAddCategoryModalOpen={isAddCategoryModalOpen} setIsAddCategoryModalOpen={setIsAddCategoryModalOpen} newCategory={newCategory} setNewCategory={setNewCategory} handleAddCategory={handleAddCategory} />} // add all props
+            {isAddCategoryModalOpen && <AddBudgetCategoryModal isAddCategoryModalOpen={isAddCategoryModalOpen} setIsAddCategoryModalOpen={setIsAddCategoryModalOpen} newCategory={newCategory} setNewCategory={setNewCategory} handleAddCategory={handleAddCategory} />}
 
 
         </div>

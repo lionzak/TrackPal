@@ -44,7 +44,7 @@ Output strictly in this JSON format.
   } catch (err) {
     console.error(err);
     return NextResponse.json(
-      { error: "Failed to generate insights" },
+      { error: "Failed to generate insights", err},
       { status: 500 }
     );
   }

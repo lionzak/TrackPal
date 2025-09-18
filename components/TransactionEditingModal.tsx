@@ -53,13 +53,13 @@ const TransactionEditingModal = ({ formData, setFormData, setIsEditModalOpen, ha
                     />
                     <div className="flex justify-end gap-2 mt-2">
                         <button
-                            className="bg-gray-300 text-black rounded-lg px-4 py-2 hover:bg-gray-400"
+                            className="bg-gray-300 text-black rounded-lg px-4 py-2 hover:bg-gray-400 hover:cursor-pointer"
                             onClick={() => setIsEditModalOpen(false)}
                         >
                             Cancel
                         </button>
                         <button
-                            className="bg-blue-500 text-white rounded-lg px-4 py-2 hover:bg-blue-600"
+                            className="bg-blue-500 text-white rounded-lg px-4 py-2 hover:bg-blue-600 hover:cursor-pointer"
                             onClick={handleUpdateTransaction}
                         >
                             Save

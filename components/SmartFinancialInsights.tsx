@@ -17,7 +17,12 @@ export const SmartFinancialInsights = ({ transactions }: { transactions: Transac
       });
       console.log(getMonthlySummary(transactions));
 
-      if (!res.ok) throw new Error("Failed to fetch insights");
+      if (!res.ok) {
+        console.error("Fetch failed with status:", res.status, res.statusText);
+        const errorText = await res.text();
+        console.error("Response body:", errorText);
+        throw new Error("Failed to fetch insights");
+      }
 
       const data = await res.json();
 

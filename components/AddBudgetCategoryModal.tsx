@@ -1,6 +1,6 @@
 import React from 'react'
 
-const AddBudgetCategoryModal = ({ isAddCategoryModalOpen, setIsAddCategoryModalOpen, newCategory, setNewCategory, handleAddCategory }: { isAddCategoryModalOpen: boolean; setIsAddCategoryModalOpen: React.Dispatch<React.SetStateAction<boolean>>; newCategory: { name: string; budget: number }; setNewCategory: React.Dispatch<React.SetStateAction<{ name: string; budget: number }>>; handleAddCategory: () => void; }) => {
+const AddBudgetCategoryModal = ({ isAddCategoryModalOpen, setIsAddCategoryModalOpen, newCategory, setNewCategory, handleAddCategory }: { isAddCategoryModalOpen: boolean; setIsAddCategoryModalOpen: React.Dispatch<React.SetStateAction<boolean>>; newCategory: { category: string; budget: number }; setNewCategory: React.Dispatch<React.SetStateAction<{ category: string; budget: number }>>; handleAddCategory: () => void; }) => {
     return (
         <>
             {isAddCategoryModalOpen && (
@@ -11,8 +11,8 @@ const AddBudgetCategoryModal = ({ isAddCategoryModalOpen, setIsAddCategoryModalO
                         <input
                             type="text"
                             placeholder="Category Name"
-                            value={newCategory.name}
-                            onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
+                            value={newCategory.category}
+                            onChange={(e) => setNewCategory({ ...newCategory, category: e.target.value })}
                             className="border border-gray-300 rounded-lg py-2 px-3 w-full mb-3 placeholder:text-gray-400"
                         />
                         <label htmlFor="budget">Total Budget</label>

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState("");
@@ -25,6 +26,12 @@ export default function ResetPasswordPage() {
 
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-gradient-to-r from-blue-500 to-purple-600">
+      <Link
+        href="/"
+        className="absolute top-8 left-8 text-white  rounded px-3 py-2 hover:bg-blue-800 transition flex items-center"
+      >
+        &#8592; Back
+      </Link>
       <form onSubmit={handleUpdate} className="space-y-4">
         <h2 className="text-xl font-bold">Reset Password</h2>
         <input

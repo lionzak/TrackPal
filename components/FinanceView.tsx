@@ -1,16 +1,15 @@
+import { supabase } from "@/lib/supabaseClient";
 import { useEffect, useState } from "react";
 import TransactionTable from "./TransactionTable";
 import DoughnutChart from "./DoughnutChart";
-import { fetchTrendData, formatDate, getMonthlyBudget, getSumByCategory, getTotalBalance, setMonthlyBudgetSupabase, Transaction } from "@/utils/HelperFunc";
-import { supabase } from "@/lib/supabaseClient";
+import { fetchTrendData, formatDate, getMonthlyBudget, getSumByCategory, getTotalBalance, Transaction } from "@/utils/HelperFunc";
 import TransactionFilter from "./TransactionFilter";
 import TransactionEditingModal from "./TransactionEditingModal";
 import FinancialCards from "./FinancialCards";
 import TransactionForm from "./TransactionForm";
 import AddBudgetCategoryModal from "./AddBudgetCategoryModal";
 import Image from "next/image";
-import BudgetOverviewTab from "./BudgetOverviewTab";
-import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import FinanceBudgetingSection from "./FinanceBudgetingSection";
 
 const FinanceView: React.FC = () => {
     // State for transactions
@@ -303,117 +302,20 @@ const FinanceView: React.FC = () => {
             </div>
 
             {/* Budgeting */}
-            <div className="bg-white rounded-lg shadow overflow-hidden">
-                <div className="px-4 py-5 sm:p-6 text-white">
-                    <h3 className="text-lg font-bold text-gray-900 mb-4">Budgeting For {new Date().toISOString().slice(0, 7)}</h3>
-                    {monthlyBudget <= 0 && (
-
-                        <form
-                            onSubmit={async (e) => {
-                                e.preventDefault();
-                                const user = await getCurrentUser();
-                                if (!user) return;
-
-                                const amount = Number(monthlyBudgetInput);
-                                if (!amount || amount <= 0) {
-                                    alert("Enter a valid amount");
-                                    return;
-                                }
-
-                                const savedBudget = await setMonthlyBudgetSupabase(user.id, amount);
-                                if (savedBudget) {
-                                    setMonthlyBudget(savedBudget.amount); // ✅ update saved budget
-                                    setMonthlyBudgetInput(""); // clear input
-                                } else {
-                                    alert("Failed to set budget. Please try again.");
-                                }
-                            }}
-                            className="flex gap-2 pb-4"
-                        >
-                            <input
-                                type="number"
-                                min={1}
-                                value={monthlyBudgetInput}  // ✅ controlled input
-                                onChange={(e) => setMonthlyBudgetInput(e.target.value)}
-                                placeholder="Enter monthly budget"
-                                className="border rounded px-3 py-1 text-black"
-                            />
-
-                            <button
-                                type="submit"
-                                className="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700 hover:cursor-pointer transition"
-                            >
-                                Set Budget
-                            </button>
-                        </form>
-
-                    )}
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                        <div className="shadow-md p-5 rounded-lg bg-gradient-to-r from-green-500 to-green-600">
-                            <h4 className="font-medium  ">Total Budget</h4>
-                            <p className="text-lg font-bold">${monthlyBudget}</p>
-                        </div>
-                        <div className="shadow-md p-5 rounded-lg bg-gradient-to-r from-red-400 to-red-600">
-                            <h4 className="font-medium">Total Spent</h4>
-                            <p className="text-lg font-bold">
-                                ${Object.values(budgetTotals).reduce((sum, val) => sum + val, 0)}
-                            </p>
-                        </div>
-                        <div className="shadow-md p-5 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600">
-                            <h4 className="font-medium">Total Remaining</h4>
-                            <p className="text-lg font-bold">${monthlyBudget - Object.values(budgetTotals).reduce((sum, val) => sum + val, 0)}</p>
-                            <p className="text-sm font-md">{((monthlyBudget - Object.values(budgetTotals).reduce((sum, val) => sum + val, 0)) / monthlyBudget * 100).toFixed(0)}%</p>
-                        </div>
-                    </div>
-                    {/* Navigation Tabs */}
-                    <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg mt-8">
-                        {['overview', 'trends'].map((tab) => (
-                            <button
-                                key={tab}
-                                onClick={() => setActiveTab(tab)}
-                                className={`hover:cursor-pointer flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${activeTab === tab
-                                    ? 'bg-white text-blue-600 shadow-sm'
-                                    : 'text-gray-600 hover:bg-gray-400'
-                                    }`}
-                            >
-                                {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                            </button>
-                        ))}
-                    </div>
-                    {activeTab === 'overview' && (
-                        <BudgetOverviewTab budget={budget} budgetTotals={budgetTotals} setIsAddCategoryModalOpen={setIsAddCategoryModalOpen} spendingDistributionData={spendingDistributionData} />
-                    )}
-                    {activeTab === 'trends' && (
-                        <div className="w-full h-96">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <LineChart data={trendData as { month: string; budget: number; spent: number }[]}>
-                                    <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                                    <XAxis dataKey="month" />
-                                    <YAxis />
-                                    <Tooltip formatter={(value: number) => [`$${value}`, '']} />
-                                    <Legend />
-                                    <Line
-                                        type="monotone"
-                                        dataKey="budget"
-                                        stroke="#6366f1"
-                                        strokeWidth={2}
-                                        name="Budget"
-                                        strokeDasharray="5 5"
-                                    />
-                                    <Line
-                                        type="monotone"
-                                        dataKey="spent"
-                                        stroke="#10b981"
-                                        strokeWidth={2}
-                                        name="Actual Spending"
-                                    />
-                                </LineChart>
-                            </ResponsiveContainer>
-                        </div>
-                    )}
-                </div>
-            </div>
+            <FinanceBudgetingSection
+                monthlyBudget={monthlyBudget}
+                setMonthlyBudget={setMonthlyBudget}
+                budgetTotals={budgetTotals}
+                getCurrentUser={getCurrentUser}
+                monthlyBudgetInput={monthlyBudgetInput}
+                setMonthlyBudgetInput={setMonthlyBudgetInput}
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                budget={budget}
+                trendData={trendData}
+                spendingDistributionData={spendingDistributionData}
+                setIsAddCategoryModalOpen={setIsAddCategoryModalOpen}
+            />
 
 
             {isEditModalOpen && editingTransaction && (

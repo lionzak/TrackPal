@@ -30,7 +30,9 @@ const BudgetDistributionPieChart = ({
             />
           ))}
         </Pie>
-        <Tooltip formatter={(value: number) => [`$${value}`, "Spent"]} />
+        <Tooltip
+          formatter={(value: number, name: string) => [`$${value}`, name]}
+        />
       </PieChart>
     </ResponsiveContainer>
   );

@@ -238,7 +238,7 @@ const BudgetTracker = () => {
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value: NewType) => [`$${value}`, 'Spent']} />
+                    <Tooltip formatter={(value: number) => [`$${value}`, 'Spent']} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>

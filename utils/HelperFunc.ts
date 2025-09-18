@@ -1,3 +1,4 @@
+import { supabase } from "@/lib/supabaseClient";
 import jsPDF from "jspdf";
 import { autoTable } from "jspdf-autotable";
 import { unparse } from "papaparse";
@@ -143,4 +144,31 @@ export  const getMonthlySummary = (transactions: Transaction[]) => {
   });
 
   return summary;
+};
+
+
+export const getTotalSpendingBySource = async (source: string) => {
+  // Get the logged-in user
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user) {
+    console.error("No user logged in:", userError);
+    return 0;
+  }
+
+  // Query the sum of spending for this source
+  const { data, error } = await supabase
+    .from("transactions")
+    .select("amount")
+    .eq("user_id", user.id)
+    .eq("category", "Spending") // only spendings
+    .eq("source", source);
+
+  if (error) {
+    console.error("Error fetching total:", error);
+    return 0;
+  }
+
+  // Calculate total
+  const total = data?.reduce((sum, t) => sum + (t.amount || 0), 0) || 0;
+  return total;
 };

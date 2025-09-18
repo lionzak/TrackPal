@@ -1,19 +1,21 @@
 import { useEffect, useState } from "react";
-import { DollarSign, PiggyBank, Wallet, WalletCards } from "lucide-react";
-import TransactionDropdown from "./TransactionDropdown";
+import { WalletCards } from "lucide-react";
 import TransactionTable from "./TransactionTable";
 import DoughnutChart from "./DoughnutChart";
-import { formatDate, getSumByCategory, getTotalBalance, Transaction } from "@/utils/HelperFunc";
+import { formatDate, getSumByCategory, getTotalBalance, getTotalSpendingBySource, Transaction } from "@/utils/HelperFunc";
 import { supabase } from "@/lib/supabaseClient";
 import TransactionFilter from "./TransactionFilter";
 import TransactionEditingModal from "./TransactionEditingModal";
 import { SmartFinancialInsights } from "./SmartFinancialInsights";
 import FinancialCards from "./FinancialCards";
 import TransactionForm from "./TransactionForm";
+import AddBudgetCategoryModal from "./AddBudgetCategoryModal";
 
 const FinanceView: React.FC = () => {
     // State for transactions
     const [transactions, setTransactions] = useState<Transaction[]>([]);
+    const [activeTab, setActiveTab] = useState('overview');
+
 
     // State for form fields
     const [formData, setFormData] = useState<Transaction>({
@@ -112,6 +114,29 @@ const FinanceView: React.FC = () => {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
+    const [isAddCategoryModalOpen, setIsAddCategoryModalOpen] = useState(false);
+    const [newCategory, setNewCategory] = useState({ name: "", budget: 0 });
+
+    const handleAddCategory = async () => {
+        if (!newCategory.name || newCategory.budget <= 0) return;
+        setBudget([...budget, { category: newCategory.name, budget: newCategory.budget }]);
+
+        //add to supabase
+        const { data, error } = await supabase
+            .from("budgets")
+            .insert([{ category: newCategory.name, budget: newCategory.budget, user_id: (await supabase.auth.getUser()).data.user?.id }]);
+        if (error) {
+            console.error("Error adding budget category:", error);
+        } else {
+            if (data) {
+                setBudget((prev) => [...prev, ...data]);
+            }
+        }
+        setNewCategory({ name: "", budget: 0 });
+        setIsAddCategoryModalOpen(false);
+    };
+
+
     const handleEditTransaction = (transaction: Transaction) => {
         setEditingTransaction(transaction);
         setFormData(transaction); // fill the form
@@ -178,8 +203,58 @@ const FinanceView: React.FC = () => {
     const investing = getSumByCategory(transactions, "Investing");
     const totalBalance = getTotalBalance(income, spendings, savings, investing);
 
+    const [budgetTotals, setBudgetTotals] = useState<Record<string, number>>({});
+
+
+
+
+    // Sample budget data
+    const [budget, setBudget] = useState([
+        { category: 'Food', budget: 800, },
+        { category: 'Transport', budget: 300 },
+        { category: 'Entertainment', budget: 200 },
+        { category: 'Shopping', budget: 400 },
+        { category: 'Bills', budget: 1200 },
+        { category: 'Savings', budget: 500 },
+    ]);
+
+    useEffect(() => {
+        const fetchBudget = async () => {
+            const { data: { user }, error: userError } = await supabase.auth.getUser();
+            if (userError || !user) {
+                console.error("No user logged in:", userError);
+                return;
+            }
+
+            const { data, error } = await supabase
+                .from("budgets")
+                .select("*")
+                .eq("user_id", user.id);
+
+            if (error) {
+                console.error("Error fetching budget:", error);
+            } else if (data) {
+                setBudget(data);
+            }
+        };
+
+        fetchBudget();
+    }, []);
+
+    const fetchBudgetTotals = async () => {
+        const totals: Record<string, number> = {};
+        for (const item of budget) {
+            totals[item.category] = await getTotalSpendingBySource(item.category);
+        }
+        setBudgetTotals(totals);
+    };
+
+    useEffect(() => {
+        fetchBudgetTotals();
+    }, [budget, transactions]);
+
     return (
-        <div className="space-y-4 sm:space-y-6">
+        <div className="space-y-4 sm:space-y-6 ">
             <div className="flex items-center gap-x-2">
                 <h1 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-0">
                     Finance Tracker
@@ -224,8 +299,120 @@ const FinanceView: React.FC = () => {
                 </div>
             </div>
 
+            {/* Budgeting */}
+            <div className="bg-white rounded-lg shadow overflow-hidden">
+                <div className="px-4 py-5 sm:p-6 text-white">
+                    <h3 className="text-lg font-bold text-gray-900 mb-4">Budgeting</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                        <div className="shadow-md p-5 rounded-lg bg-gradient-to-r from-green-500 to-green-600">
+                            <h4 className="font-medium  ">Total Budget</h4>
+                            <p className="text-lg font-bold">$asd</p>
+                        </div>
+                        <div className="shadow-md p-5 rounded-lg bg-gradient-to-r from-red-400 to-red-600">
+                            <h4 className="font-medium">Total Spent</h4>
+                            <p className="text-lg font-bold">$asds</p>
+                        </div>
+                        <div className="shadow-md p-5 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600">
+                            <h4 className="font-medium">Total Remaining</h4>
+                            <p className="text-lg font-bold">$asds</p>
+                        </div>
+                    </div>
+                    {/* Navigation Tabs */}
+                    <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg mt-8">
+                        {['overview', 'categories', 'trends', 'insights'].map((tab) => (
+                            <button
+                                key={tab}
+                                onClick={() => setActiveTab(tab)}
+                                className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${activeTab === tab
+                                    ? 'bg-white text-blue-600 shadow-sm'
+                                    : 'text-gray-600 hover:bg-gray-400'
+                                    }`}
+                            >
+                                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                            </button>
+                        ))}
+                    </div>
+                    {activeTab === 'overview' && (
+                        <div className="mt-4 text-gray-700">
+                            <div className="shadow-md">
+                                <div className="flex justify-between items-center p-4 bg-white rounded-t-lg">
+                                    <h3 className="text-lg font-bold text-gray-900 mb-4">Budget Progress</h3>
+                                    <button onClick={() => setIsAddCategoryModalOpen(true)} className=" bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700 transition-colors hover:cursor-pointer">
+                                        + Add Category
+                                    </button>
+
+
+                                </div>
+
+                                <div className="flex w-full">
+                                    <div className="w-1/2 max-h-96 overflow-y-auto min-w-0">
+                                        {budget.map((item) => {
+                                            const totalSpent = budgetTotals[item.category] || 0;
+                                            const percentage = Math.min((totalSpent / item.budget) * 100, 100);
+                                            return (
+                                                <div key={item.category} className="m-5 mb-4">
+                                                    <div className="flex justify-between">
+                                                        <span className="font-medium">{item.category}</span>
+                                                        <div>
+                                                            <span className="font-medium text-black">${totalSpent}</span>
+                                                            <span> / </span>
+                                                            <span className="font-medium text-black">${item.budget}</span>
+                                                            <div className="text-end text-gray-500 text-sm"><span>{percentage.toFixed(0)}%</span></div>
+                                                        </div>
+
+                                                    </div>
+                                                    <div className="relative pt-1">
+
+                                                        <div className="flex h-2 mb-4 rounded bg-gray-200">
+                                                            <div
+                                                                className={`flex h-2 rounded ${percentage >= 90 ? "bg-red-600" : percentage >= 75 ? "bg-yellow-500" : "bg-green-500"}`}
+                                                                style={{ width: `${percentage}%` }}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                    <div className="w-1/2 max-h-96 overflow-y-auto min-w-0">
+                                        {budget.map((item) => {
+                                            const totalSpent = budgetTotals[item.category] || 0;
+                                            const percentage = Math.min((totalSpent / item.budget) * 100, 100);
+                                            return (
+                                                <div key={item.category} className="m-5 mb-4">
+                                                    <div className="flex justify-between">
+                                                        <span className="font-medium">{item.category}</span>
+                                                        <div>
+                                                            <span className="font-medium text-black">${totalSpent}</span>
+                                                            <span> / </span>
+                                                            <span className="font-medium text-black">${item.budget}</span>
+                                                            <div className="text-end text-gray-500 text-sm"><span>{percentage.toFixed(0)}%</span></div>
+                                                        </div>
+
+                                                    </div>
+                                                    <div className="relative pt-1">
+
+                                                        <div className="flex h-2 mb-4 rounded bg-gray-200">
+                                                            <div
+                                                                className={`flex h-2 rounded ${percentage >= 90 ? "bg-red-600" : percentage >= 75 ? "bg-yellow-500" : "bg-green-500"}`}
+                                                                style={{ width: `${percentage}%` }}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+
+                            </div>
+                        </div>)}
+                </div>
+            </div>
+
             <SmartFinancialInsights transactions={transactions} />
-            
+
             {isEditModalOpen && editingTransaction && (
                 <TransactionEditingModal
                     formData={formData}                // use the form state
@@ -236,6 +423,9 @@ const FinanceView: React.FC = () => {
                     handleUpdateTransaction={handleUpdateTransaction}
                 />
             )}
+
+            {/* Add Category Modal */}
+            {isAddCategoryModalOpen && <AddBudgetCategoryModal isAddCategoryModalOpen={isAddCategoryModalOpen} setIsAddCategoryModalOpen={setIsAddCategoryModalOpen} newCategory={newCategory} setNewCategory={setNewCategory} handleAddCategory={handleAddCategory} />} // add all props
 
 
         </div>

@@ -3,7 +3,7 @@
 import { getMonthlySummary, Transaction } from "@/utils/HelperFunc";
 import React, { useState } from "react";
 
-export const SmartFinancialInsights = ({ transactions }: { transactions: Transaction[] }) => {
+export const SmartFinancialInsights = ({ transactions, trendData, spendingDistributionData }: { transactions: Transaction[], trendData: { month: string; budget: number; spent: number }[], spendingDistributionData: { name: string; value: number }[] }) => {
   const [insights, setInsights] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -13,7 +13,7 @@ export const SmartFinancialInsights = ({ transactions }: { transactions: Transac
       const res = await fetch("/api/insights", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ summary: getMonthlySummary(transactions) }),
+        body: JSON.stringify({ summary: getMonthlySummary(transactions), trendData: trendData, spendingDistributionData: spendingDistributionData }),
       });
       console.log(getMonthlySummary(transactions));
 

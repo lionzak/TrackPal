@@ -6,12 +6,20 @@ const client = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { summary } = body;
+    const { summary, trendData, spendingDistributionData } = body;
 
     const prompt = `
 You are a financial assistant. Here is the user's monthly transaction summary:
 
 ${JSON.stringify(summary)}
+
+Here is the trend data:
+
+${JSON.stringify(trendData)}
+
+Here is the spending distribution data:
+
+${JSON.stringify(spendingDistributionData)}
 
 Generate 3-5 actionable insights in plain, friendly language:
 - Insights about spending habits
@@ -44,7 +52,7 @@ Output strictly in this JSON format.
   } catch (err) {
     console.error(err);
     return NextResponse.json(
-      { error: "Failed to generate insights", err},
+      { error: "Failed to generate insights", err },
       { status: 500 }
     );
   }

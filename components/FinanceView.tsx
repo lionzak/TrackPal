@@ -10,6 +10,7 @@ import TransactionForm from "./TransactionForm";
 import AddBudgetCategoryModal from "./AddBudgetCategoryModal";
 import Image from "next/image";
 import FinanceBudgetingSection from "./FinanceBudgetingSection";
+import { SmartFinancialInsights } from "./SmartFinancialInsights";
 
 const FinanceView: React.FC = () => {
     // State for transactions
@@ -301,6 +302,7 @@ const FinanceView: React.FC = () => {
                 </div>
             </div>
 
+
             {/* Budgeting */}
             <FinanceBudgetingSection
                 monthlyBudget={monthlyBudget}
@@ -317,6 +319,11 @@ const FinanceView: React.FC = () => {
                 setIsAddCategoryModalOpen={setIsAddCategoryModalOpen}
             />
 
+            {/*Smart Insights */}
+            <SmartFinancialInsights trendData={trendData}
+                spendingDistributionData={spendingDistributionData} transactions={transactions}     />
+                
+        
 
             {isEditModalOpen && editingTransaction && (
                 <TransactionEditingModal

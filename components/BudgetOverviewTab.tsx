@@ -1,5 +1,6 @@
 import React from 'react'
 import BudgetDistributionPieChart from './BudgetDistributionPieChart';
+import { AlertTriangle } from 'lucide-react';
 
 const BudgetOverviewTab = ({ budget, budgetTotals, setIsAddCategoryModalOpen, spendingDistributionData }: { budget: { category: string; budget: number }[]; budgetTotals: Record<string, number>; setIsAddCategoryModalOpen: React.Dispatch<React.SetStateAction<boolean>>; spendingDistributionData: { name: string; value: number }[]; }) => {
     return (
@@ -30,6 +31,12 @@ const BudgetOverviewTab = ({ budget, budgetTotals, setIsAddCategoryModalOpen, sp
                                             <div className="text-end text-gray-500 text-sm"><span>{percentage.toFixed(0)}%</span></div>
                                         </div>
                                     </div>
+                                    {totalSpent > item.budget && (
+                                        <p className="text-xs text-red-600 flex items-center gap-1">
+                                            <AlertTriangle size={12} />
+                                            Over budget by ${totalSpent - item.budget}
+                                        </p>
+                                    )}
                                     <div className="relative pt-1">
                                         <div className="flex h-2 mb-4 rounded bg-gray-200">
                                             <div

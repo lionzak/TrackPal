@@ -210,9 +210,6 @@ export const getMonthlyBudget = async (userId: string) => {
     .eq("month_year", monthYear)
     .maybeSingle();
 
-  console.log("Fetched monthly budget:", data, error);
-  console.log("Saving budget:", userId, monthYear, data?.amount);
-
   if (error) {
     console.error("Error fetching monthly budget:", error);
     return null;
@@ -234,7 +231,6 @@ export async function getMonthlyBudgets(userId: string) {
   }
   return data; // [{ month_year: "2025-05", amount: 3400 }, ...]
 }
-
 
 export const fetchTrendData = async (userId: string, transactions: any[]) => {
   // 1. Get monthly budgets
@@ -264,3 +260,49 @@ export const fetchTrendData = async (userId: string, transactions: any[]) => {
 
   return trend;
 };
+
+export // utils/calcPercentages.ts
+function calcPercentages({
+  income,
+  savings,
+  spending,
+  balance,
+}: {
+  income: number;
+  savings: number;
+  spending: number;
+  balance: number;
+}) {
+  const safeDivide = (a: number, b: number) => (b === 0 ? 0 : (a / b) * 100);
+
+  // Percentages relative to Income
+  const savingsPct = safeDivide(savings, income);
+  const spendingPct = safeDivide(spending, income);
+  const balancePct = safeDivide(balance, income);
+
+  // Percentages relative to all values combined
+  const totalAll = income + savings + spending + balance;
+  const incomePctAll = safeDivide(income, totalAll);
+  const savingsPctAll = safeDivide(savings, totalAll);
+  const spendingPctAll = safeDivide(spending, totalAll);
+  const balancePctAll = safeDivide(balance, totalAll);
+
+  return {
+    // raw values
+    income,
+    savings,
+    spending,
+    balance,
+
+    // % of income
+    savingsPct,
+    spendingPct,
+    balancePct,
+
+    // % of all
+    incomePctAll,
+    savingsPctAll,
+    spendingPctAll,
+    balancePctAll,
+  };
+}

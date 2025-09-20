@@ -16,6 +16,8 @@ export const SmartFinancialInsights = ({ transactions, trendData, spendingDistri
         body: JSON.stringify({ summary: getMonthlySummary(transactions), trendData: trendData, spendingDistributionData: spendingDistributionData }),
       });
       console.log(getMonthlySummary(transactions));
+      console.log(trendData);
+      console.log(spendingDistributionData);
 
       if (!res.ok) {
         console.error("Fetch failed with status:", res.status, res.statusText);

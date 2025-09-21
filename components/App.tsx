@@ -24,12 +24,12 @@ const App: React.FC<AppProps> = ({ displayName }) => {
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <div className="flex items-center space-x-2 flex-shrink-0">
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-2 rounded-lg">
-                <BarChart3 size={20} className="sm:w-6 sm:h-6" />
-              </div>
-              <span className="text-lg sm:text-xl font-bold text-gray-800">
-                TrackPal
-              </span>
+              <img
+                src="/logo_fit.png"
+                alt="App Logo"
+                className="h-32 w-auto sm:h-10"
+                style={{ objectFit: 'contain' }}
+              />
             </div>
 
             {/* Desktop Navigation */}

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { BarChart3, Menu, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import DashboardView from '@/components/DashboardView';
 import DailyRoutineView from '@/components/DailyRoutineView';
 import WeeklyGoalsView from '@/components/WeeklyGoalsView';

@@ -2,13 +2,13 @@ import React, { SetStateAction } from 'react'
 import TransactionDropdown from './TransactionDropdown'
 import { Transaction } from '@/utils/HelperFunc'
 
-const TransactionEditingModal = ({ formData, setFormData, setIsEditModalOpen, handleChange, handleDropdownChange, handleUpdateTransaction }: {formData: {
+const TransactionEditingModal = ({ formData, setIsEditModalOpen, handleChange, handleDropdownChange, handleUpdateTransaction }: {formData: {
         date: string,
         source: string,
         amount: number,
         category: string,
         notes: string,
-    }, setFormData: React.Dispatch<SetStateAction<Transaction>>, setIsEditModalOpen: React.Dispatch<React.SetStateAction<boolean>>, handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void, handleDropdownChange: (name: string, value: string) => void, handleUpdateTransaction: () => void }) => {
+    }, setIsEditModalOpen: React.Dispatch<React.SetStateAction<boolean>>, handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void, handleDropdownChange: (name: string, value: string) => void, handleUpdateTransaction: () => void }) => {
     return (
         <div className="fixed inset-0 bg-black/50  text-black flex items-center justify-center z-50">
             <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">

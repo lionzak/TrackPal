@@ -78,7 +78,7 @@ const WeeklyGoalsView: React.FC = () => {
             return;
         }
 
-        const { data, error } = await supabase.rpc("update_weekly_goal_with_tasks", {
+        const { error } = await supabase.rpc("update_weekly_goal_with_tasks", {
             p_goal_id: goal.id,
             p_user_id: user?.id,
             p_title: goal.title,

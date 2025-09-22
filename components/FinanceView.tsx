@@ -326,7 +326,6 @@ const FinanceView: React.FC = () => {
             {isEditModalOpen && editingTransaction && (
                 <TransactionEditingModal
                     formData={formData}                // use the form state
-                    setFormData={setFormData}          // allow changes
                     setIsEditModalOpen={setIsEditModalOpen}
                     handleChange={handleChange}
                     handleDropdownChange={handleDropdownChange}

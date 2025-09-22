@@ -42,7 +42,11 @@ const EditWeeklyGoalModal: React.FC<EditWeeklyGoalModalProps> = ({
     ]);
   };
 
-  const handleTaskChange = (id: number, field: keyof WeeklyGoalTask, value: any) => {
+  const handleTaskChange = (
+    id: number,
+    field: keyof WeeklyGoalTask,
+    value: WeeklyGoalTask[keyof WeeklyGoalTask]
+  ) => {
     setTasks((prev) =>
       prev.map((task) => (task.id === id ? { ...task, [field]: value } : task))
     );

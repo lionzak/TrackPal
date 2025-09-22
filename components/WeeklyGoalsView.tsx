@@ -1,179 +1,259 @@
-import React from 'react';
+import { supabase } from '@/lib/supabaseClient';
+import React, { useEffect, useState } from 'react';
+import AddWeeklyGoalModal from './AddWeeklyGoalModal';
+import EditWeeklyGoalModal from './EditWeeklyGoalModal';
+import { WeeklyGoal } from '@/types';
 
-interface WeeklyGoal {
-    id: number;
-    title: string;
-    state: 'not-started' | 'in-progress' | 'done';
-    tasks: WeeklyGoalTask[];
-}
-
-interface WeeklyGoalTask {
-    id: number;
-    goalId: number;
-    title: string;
-    completed: boolean;
-}
 
 const WeeklyGoalsView: React.FC = () => {
+    const [weeklyGoals, setWeeklyGoals] = useState<WeeklyGoal[]>([]);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingGoal, setEditingGoal] = useState<WeeklyGoal | null>(null);
 
-    //add some mock data for now
-    const [mockGoals, setMockGoals] = React.useState<WeeklyGoal[]>([
-        {
-            id: 1,
-            title: 'Goal 1',
-            state: 'not-started',
-            tasks: [
-                { id: 1, goalId: 1, title: 'Task 1', completed: false },
-                { id: 2, goalId: 1, title: 'Task 2', completed: false },
-            ],
-        },
-        {
-            id: 2,
-            title: 'Goal 2',
-            state: 'in-progress',
-            tasks: [
-                { id: 3, goalId: 2, title: 'Task 3', completed: true },
-                { id: 4, goalId: 2, title: 'Task 4', completed: false },
-            ],
-        },
-        {
-            id: 3,
-            title: 'Goal 3',
-            state: 'in-progress',
-            tasks: [
-                { id: 5, goalId: 3, title: 'Task 5', completed: true },
-                { id: 6, goalId: 3, title: 'Task 6', completed: false },
-            ],
-        },
-        {
-            id: 4,
-            title: 'Goal 4',
-            state: 'done',
-            tasks: [
-                { id: 7, goalId: 4, title: 'Task 7', completed: true },
-                { id: 8, goalId: 4, title: 'Task 8', completed: true },
-            ],
-        },
-    ]);
+    const fetchWeeklyGoals = async () => {
+        const {
+            data: { user },
+        } = await supabase.auth.getUser();
+
+        const { data, error } = await supabase.rpc("get_weekly_goals_with_tasks", {
+            p_user_id: user?.id,
+        });
+
+        if (!error) {
+            setWeeklyGoals(data as WeeklyGoal[]);
+        } else {
+            console.error("Error fetching weekly goals:", error);
+        }
+    };
+
+    const handleSaveGoal = async (goal: {
+        title: string;
+        state: string;
+        tasks: { title: string; completed: boolean }[];
+    }) => {
+        const {
+            data: { user },
+        } = await supabase.auth.getUser();
+
+        await supabase.rpc("insert_weekly_goal_with_tasks", {
+            user_id: user?.id,
+            title: goal.title,
+            state: goal.state,
+            tasks: goal.tasks,
+        });
+
+        fetchWeeklyGoals();
+    };
+
+    const handleToggleTask = async (taskId: number, completed: boolean) => {
+        const { data, error } = await supabase.rpc("update_weekly_goal_task_state", {
+            p_task_id: taskId,
+            p_completed: completed,
+        });
+
+        if (error) {
+            console.error("Error updating task state:", error);
+            return;
+        }
+
+        if (data) {
+            setWeeklyGoals((prev) =>
+                prev.map((goal) => ({
+                    ...goal,
+                    tasks: goal.tasks.map((task) =>
+                        task.id === taskId ? { ...task, completed: data.completed } : task
+                    ),
+                }))
+            );
+        }
+    };
+
+    const handleUpdateGoal = async (goal: WeeklyGoal) => {
+        console.log("Updating goal:", goal);
+        
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+            console.error("User not found");
+            return;
+        }
+
+        const { data, error } = await supabase.rpc("update_weekly_goal_with_tasks", {
+            p_goal_id: goal.id,
+            p_user_id: user?.id,
+            p_title: goal.title,
+            p_state_text: goal.state, // pass string here
+            p_tasks: goal.tasks,      // array of task objects (jsonb)
+        });
+
+        if (error) {
+            console.error("Error updating goal:", error);
+            return;
+        }
+
+        fetchWeeklyGoals();
+    };
+
+
+
+
+    useEffect(() => {
+        fetchWeeklyGoals();
+    }, []);
 
     return (
         <div className="space-y-4 sm:space-y-6 text-black">
             {/* Header Section */}
             <div className="flex items-center gap-x-2 text-center self-center">
-                <h1 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-0">
-                    Weekly Goals 🎯
-                </h1>
+                <div className='flex w-full justify-between items-center '>
+                    <h1 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-0">
+                        Weekly Goals 🎯
+                    </h1>
+                    <button
+                        className="ml-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition hover:cursor-pointer"
+                        onClick={() => setIsModalOpen(true)}
+                    >
+                        Add Goal
+                    </button>
+                </div>
             </div>
 
             {/* Goals List */}
             <div className='grid grid-cols-1 sm:grid-cols-3 gap-4'>
-                {/* In Progress Goals */}
-                <div className=' p-6 rounded-lg shadow-xl bg-white'>
+                {/* Not Started */}
+                <div className='p-6 rounded-lg shadow-xl bg-white'>
                     <h2 className="text-lg font-semibold text-gray-700 mb-5 text-center">Not Started</h2>
                     <div className="space-y-2">
-                        {mockGoals.filter(goal => goal.state === 'not-started').map(goal => (
+                        {weeklyGoals.filter(goal => goal.state === 'not-started').length > 0 ? (
+                            weeklyGoals.filter(goal => goal.state === 'not-started').map(goal => (
+                                <div key={goal.id} className="p-4 border rounded-lg shadow-sm bg-white">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <h3 className="text-md font-semibold text-gray-800">{goal.title}</h3>
+                                        <button
+                                            className='text-blue-500 hover:underline hover:cursor-pointer'
+                                            onClick={() => setEditingGoal(goal)}
+                                        >
+                                            Edit
+                                        </button>
+                                    </div>
+                                    <ul className="list-disc pl-5">
+                                        {goal.tasks.map((t) => (
+                                            <li key={t.id} className="flex items-center gap-2">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={t.completed}
+                                                    onChange={(e) => handleToggleTask(t.id, e.target.checked)}
+                                                />
+                                                <span className={t.completed ? "line-through text-gray-400" : ""}>
+                                                    {t.title}
+                                                </span>
+                                            </li>
+                                        ))}
+                                    </ul>
 
-                            <div key={goal.id} className="p-4 border rounded-lg shadow-sm bg-white">
-                                <h3 className="text-md font-semibold text-gray-800">{goal.title}</h3>
-                                <ul className="list-disc list-inside space-y-3 mb-5">
-                                    {goal.tasks.map(task => (
-                                        <li key={task.id} className={`flex text-xl items-center ${task.completed ? 'line-through text-gray-400' : ''}`}>
-                                            <input
-                                                type="checkbox"
-                                                checked={task.completed}
-                                                onChange={() => { }}
-                                                className="mr-2"
-                                            />
-                                            {task.title}
-                                        </li>
-                                    ))}
-                                </ul>
-                                {/* Progress Bar */}
-                                <div className="flex h-2 mb-4 rounded bg-gray-200">
-                                    <div
-                                        className={`flex h-2 rounded`}
-                                        style={{ width: `${(goal.tasks.filter(task => task.completed).length / goal.tasks.length) * 100}%` }}
-                                    />
                                 </div>
-                                <div className="text-sm text-gray-600">
-                                    0% Complete
-                                </div>
-                            </div>
-                        ))}
+                            ))
+                        ) : (
+                            <p className="text-gray-500 text-center">No goals in this category.</p>
+                        )}
                     </div>
                 </div>
 
-                {/* In Progress Goals */}
-                <div className=' p-6 rounded-lg shadow-xl bg-white'>
+                {/* In Progress */}
+                <div className='p-6 rounded-lg shadow-xl bg-white'>
                     <h2 className="text-lg font-semibold mb-5 text-center text-amber-500">In Progress</h2>
                     <div className="space-y-4">
-                        {mockGoals.filter(goal => goal.state === 'in-progress').map(goal => (
-                            <div key={goal.id} className="p-4 border-2 border-yellow-200 rounded-lg shadow-sm bg-yellow-50">
-                                <h3 className="text-md font-semibold text-gray-800">{goal.title}</h3>
-                                <ul className="list-disc list-inside space-y-3 mb-5">
-                                    {goal.tasks.map(task => (
-                                        <li key={task.id} className={`flex text-xl items-center ${task.completed ? 'line-through text-green-400' : 'text-gray-600'}`}>
-                                            <input
-                                                type="checkbox"
-                                                checked={task.completed}
-                                                onChange={() => { }}
-                                                className="mr-2"
-                                            />
-                                            {task.title}
-                                        </li>
-                                    ))}
-                                </ul>
-                                {/* Progress Bar */}
-                                <div className="flex h-2 mb-2 rounded bg-gray-200">
-                                    <div
-                                        className={`flex h-2 rounded bg-yellow-500`}
-                                        style={{ width: `${(goal.tasks.filter(task => task.completed).length / goal.tasks.length) * 100}%` }}
-                                    />
+                        {weeklyGoals.filter(goal => goal.state === 'in-progress').length > 0 ? (
+                            weeklyGoals.filter(goal => goal.state === 'in-progress').map(goal => (
+                                <div key={goal.id} className="p-4 border-2 border-yellow-200 rounded-lg shadow-sm bg-yellow-50">
+                                    <div className='flex justify-between items-center mb-4'>
+                                        <h3 className="text-md font-semibold text-gray-800">{goal.title}</h3>
+                                        <button
+                                            className='text-blue-500 hover:underline hover:cursor-pointer'
+                                            onClick={() => setEditingGoal(goal)}
+                                        >
+                                            Edit
+                                        </button>
+                                    </div>
+                                    <ul className="list-disc pl-5">
+                                        {goal.tasks.map((t) => (
+                                            <li key={t.id} className="flex items-center gap-2">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={t.completed}
+                                                    onChange={(e) => handleToggleTask(t.id, e.target.checked)}
+                                                />
+                                                <span className={t.completed ? "line-through text-gray-400" : ""}>
+                                                    {t.title}
+                                                </span>
+                                            </li>
+                                        ))}
+                                    </ul>
+
                                 </div>
-                                <div className="text-sm text-gray-600">
-                                    {((goal.tasks.filter(task => task.completed).length / goal.tasks.length) * 100).toFixed(0)}% Complete
-                                </div>
-                            </div>
-                        ))}
+                            ))
+                        ) : (
+                            <p className="text-gray-500 text-center">No goals in this category.</p>
+                        )}
                     </div>
                 </div>
 
-                {/* Completed Goals */}
-                <div className=' p-6 rounded-lg shadow-xl bg-white'>
+                {/* Done */}
+                <div className='p-6 rounded-lg shadow-xl bg-white'>
                     <h2 className="text-lg font-semibold text-green-500 mb-5 text-center">Done</h2>
                     <div className="space-y-4">
-                        {mockGoals.filter(goal => goal.state === 'done').map(goal => (
-                            <div key={goal.id} className="p-4 border-2 border-green-200 rounded-lg shadow-sm bg-green-50">
-                                <h3 className="text-md font-semibold text-gray-800">{goal.title}</h3>
-                                <ul className="list-disc list-inside space-y-3 mb-5">
-                                    {goal.tasks.map(task => (
-                                        <li key={task.id} className={`flex text-xl items-center ${task.completed ? 'line-through text-gray-400' : ''}`}>
-                                            <input
-                                                type="checkbox"
-                                                checked={task.completed}
-                                                onChange={() => { }}
-                                                className="mr-2"
-                                            />
-                                            {task.title}
-                                        </li>
-                                    ))}
-                                </ul>
-                                {/* Progress Bar */}
-                                <div className="flex h-2 mb-2 rounded bg-gray-200">
-                                    <div
-                                        className={`flex h-2 rounded bg-green-500`}
-                                        style={{ width: `${(goal.tasks.filter(task => task.completed).length / goal.tasks.length) * 100}%` }}
-                                    />
+                        {weeklyGoals.filter(goal => goal.state === 'done').length > 0 ? (
+                            weeklyGoals.filter(goal => goal.state === 'done').map(goal => (
+                                <div key={goal.id} className="p-4 border-2 border-green-200 rounded-lg shadow-sm bg-green-50">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <h3 className="text-md font-semibold text-gray-800">{goal.title}</h3>
+                                        <button
+                                            className='text-blue-500 hover:underline hover:cursor-pointer'
+                                            onClick={() => setEditingGoal(goal)}
+                                        >
+                                            Edit
+                                        </button>
+                                    </div>
+                                    <ul className="list-disc pl-5">
+                                        {goal.tasks.map((t) => (
+                                            <li key={t.id} className="flex items-center gap-2">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={t.completed}
+                                                    onChange={(e) => handleToggleTask(t.id, e.target.checked)}
+                                                />
+                                                <span className={t.completed ? "line-through text-gray-400" : ""}>
+                                                    {t.title}
+                                                </span>
+                                            </li>
+                                        ))}
+                                    </ul>
+
                                 </div>
-                                <div className="text-sm text-gray-600">
-                                    {((goal.tasks.filter(task => task.completed).length / goal.tasks.length) * 100).toFixed(0)}% Complete
-                                </div>
-                            </div>
-                        ))}
+                            ))
+                        ) : (
+                            <p className="text-gray-500 text-center">No goals in this category.</p>
+                        )}
                     </div>
                 </div>
-
             </div>
+
+            {/* Add & Edit Modals */}
+            <AddWeeklyGoalModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onSave={handleSaveGoal}
+            />
+
+            {editingGoal && (
+                <EditWeeklyGoalModal
+                    isOpen={!!editingGoal}
+                    onClose={() => setEditingGoal(null)}
+                    goal={editingGoal}
+                    onSave={handleUpdateGoal}
+                />
+            )}
+
         </div>
     );
 };

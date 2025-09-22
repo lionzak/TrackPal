@@ -25,10 +25,10 @@ const App: React.FC<AppProps> = ({ displayName }) => {
             {/* Logo */}
             <div className="flex items-center space-x-2 flex-shrink-0">
               <img
-                src="/logo_fit.png"
-                alt="App Logo"
-                className="h-32 w-auto sm:h-10"
-                style={{ objectFit: 'contain' }}
+              src="/logo_fit.png"
+              alt="App Logo"
+              className="h-10 w-auto sm:h-10 md:h-12 lg:h-14 xl:h-16"
+              style={{ objectFit: 'contain' }}
               />
             </div>
 

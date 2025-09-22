@@ -4,7 +4,6 @@ import AddWeeklyGoalModal from './AddWeeklyGoalModal';
 import EditWeeklyGoalModal from './EditWeeklyGoalModal';
 import { WeeklyGoal } from '@/types';
 
-
 const WeeklyGoalsView: React.FC = () => {
     const [weeklyGoals, setWeeklyGoals] = useState<WeeklyGoal[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -14,17 +13,35 @@ const WeeklyGoalsView: React.FC = () => {
         const {
             data: { user },
         } = await supabase.auth.getUser();
+        if (!user) return;
 
-        const { data, error } = await supabase.rpc("get_weekly_goals_with_tasks", {
-            p_user_id: user?.id,
-        });
+        const { data, error } = await supabase
+            .from('weekly_goals')
+            .select(`
+        id,
+        title,
+        state,
+        tasks:weekly_goal_tasks(
+          id,
+          goal_id,
+          title,
+          completed
+        )
+      `)
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false });
 
-        if (!error) {
-            setWeeklyGoals(data as WeeklyGoal[]);
-        } else {
-            console.error("Error fetching weekly goals:", error);
+        if (error) {
+            console.error('Error fetching weekly goals:', error);
+            return;
         }
+
+        if (data) setWeeklyGoals(data as WeeklyGoal[]);
     };
+
+    useEffect(() => {
+        fetchWeeklyGoals();
+    }, []);
 
     const handleSaveGoal = async (goal: {
         title: string;
@@ -34,78 +51,157 @@ const WeeklyGoalsView: React.FC = () => {
         const {
             data: { user },
         } = await supabase.auth.getUser();
+        if (!user) return;
 
-        await supabase.rpc("insert_weekly_goal_with_tasks", {
-            user_id: user?.id,
-            title: goal.title,
-            state: goal.state,
-            tasks: goal.tasks,
-        });
+        const { data: insertedGoal, error } = await supabase
+            .from('weekly_goals')
+            .insert([{ user_id: user.id, title: goal.title, state: goal.state }])
+            .select('*')
+            .single();
 
-        fetchWeeklyGoals();
+        if (error || !insertedGoal) {
+            console.error('Error inserting goal:', error);
+            return;
+        }
+
+        let insertedTasks: typeof goal.tasks = [];
+        if (goal.tasks.length > 0) {
+            const { data: tasksData, error: tasksError } = await supabase
+                .from('weekly_goal_tasks')
+                .insert(
+                    goal.tasks.map((t) => ({
+                        goal_id: insertedGoal.id,
+                        title: t.title,
+                        completed: t.completed,
+                    }))
+                )
+                .select('*');
+
+            if (tasksError) {
+                console.error('Error inserting tasks:', tasksError);
+                return;
+            }
+
+            insertedTasks = tasksData || [];
+        }
+
+        // Refetch goals to ensure consistency
+        await fetchWeeklyGoals();
     };
 
+    const handleUpdateGoal = async (updatedGoal: WeeklyGoal) => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            console.log("Updating goal:", updatedGoal);
+
+            // 1. Update goal title/state
+            const { error: goalError } = await supabase
+                .from('weekly_goals')
+                .update({ title: updatedGoal.title, state: updatedGoal.state })
+                .eq('id', updatedGoal.id)
+                .eq('user_id', user.id);
+
+            if (goalError) {
+                console.error('Error updating goal:', goalError);
+                return;
+            }
+            console.log("Goal updated successfully");
+
+            // 2. Fetch existing tasks from DB
+            const { data: existingTasks, error: fetchTasksError } = await supabase
+                .from('weekly_goal_tasks')
+                .select('*')
+                .eq('goal_id', updatedGoal.id);
+
+            if (fetchTasksError) {
+                console.error('Error fetching existing tasks:', fetchTasksError);
+                return;
+            }
+
+            // 3. Handle insert/update
+            for (const task of updatedGoal.tasks) {
+                if (task.id < 0) {
+                    // New task (temporary negative ID)
+                    const { error: insertError } = await supabase
+                        .from('weekly_goal_tasks')
+                        .insert({
+                            goal_id: updatedGoal.id,
+                            title: task.title,
+                            completed: task.completed,
+                        });
+                    if (insertError) console.error('Error inserting new task:', insertError);
+                } else {
+                    // Existing task - update
+                    const { error: updateError } = await supabase
+                        .from('weekly_goal_tasks')
+                        .update({
+                            title: task.title,
+                            completed: task.completed,
+                        })
+                        .eq('id', task.id)
+                        .eq('goal_id', updatedGoal.id);
+
+                    if (updateError) console.error('Error updating task:', updateError);
+                }
+            }
+
+            // 4. Handle deletion
+            const updatedTaskIds = updatedGoal.tasks.filter(t => t.id > 0).map(t => t.id);
+            const tasksToDelete = existingTasks?.filter(t => !updatedTaskIds.includes(t.id)) || [];
+
+            for (const task of tasksToDelete) {
+                const { error: deleteError } = await supabase
+                    .from('weekly_goal_tasks')
+                    .delete()
+                    .eq('id', task.id);
+
+                if (deleteError) console.error('Error deleting task:', deleteError);
+                else console.log('Deleted task:', task.id);
+            }
+
+            // 5. Refresh UI
+            await fetchWeeklyGoals();
+            console.log("Goals refreshed after update");
+
+        } catch (err) {
+            console.error("Unexpected error in handleUpdateGoal:", err);
+        }
+    };
+
+
+
     const handleToggleTask = async (taskId: number, completed: boolean) => {
-        const { data, error } = await supabase.rpc("update_weekly_goal_task_state", {
+        const { data, error } = await supabase.rpc('update_weekly_goal_task_state', {
             p_task_id: taskId,
             p_completed: completed,
         });
 
         if (error) {
-            console.error("Error updating task state:", error);
+            console.error('Error updating task state:', error);
             return;
         }
 
-        if (data) {
-            setWeeklyGoals((prev) =>
-                prev.map((goal) => ({
-                    ...goal,
-                    tasks: goal.tasks.map((task) =>
-                        task.id === taskId ? { ...task, completed: data.completed } : task
-                    ),
-                }))
-            );
-        }
+        // Refetch goals to ensure consistency
+        await fetchWeeklyGoals();
     };
 
-    const handleUpdateGoal = async (goal: WeeklyGoal) => {
-        console.log("Updating goal:", goal);
-        
-        const { data: { user } } = await supabase.auth.getUser();
-
-        if (!user) {
-            console.error("User not found");
-            return;
-        }
-
-        const { error } = await supabase.rpc("update_weekly_goal_with_tasks", {
-            p_goal_id: goal.id,
-            p_user_id: user?.id,
-            p_title: goal.title,
-            p_state_text: goal.state, // pass string here
-            p_tasks: goal.tasks,      // array of task objects (jsonb)
-        });
-
+    const handleDeleteGoal = async (goalId: number) => {
+        const { error } = await supabase.from('weekly_goals').delete().eq('id', goalId);
         if (error) {
-            console.error("Error updating goal:", error);
+            console.error('Error deleting goal:', error);
             return;
         }
 
-        fetchWeeklyGoals();
+        // Refetch goals to ensure consistency
+        await fetchWeeklyGoals();
     };
-
-
-
-
-    useEffect(() => {
-        fetchWeeklyGoals();
-    }, []);
 
     return (
         <div className="space-y-4 sm:space-y-6 text-black">
-            {/* Header Section */}
             <div className="flex items-center gap-x-2 text-center self-center">
-                <div className='flex w-full justify-between items-center '>
+                <div className="flex w-full justify-between items-center">
                     <h1 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-0">
                         Weekly Goals 🎯
                     </h1>
@@ -118,127 +214,78 @@ const WeeklyGoalsView: React.FC = () => {
                 </div>
             </div>
 
-            {/* Goals List */}
-            <div className='grid grid-cols-1 sm:grid-cols-3 gap-4'>
-                {/* Not Started */}
-                <div className='p-6 rounded-lg shadow-xl bg-white'>
-                    <h2 className="text-lg font-semibold text-gray-700 mb-5 text-center">Not Started</h2>
-                    <div className="space-y-2">
-                        {weeklyGoals.filter(goal => goal.state === 'not-started').length > 0 ? (
-                            weeklyGoals.filter(goal => goal.state === 'not-started').map(goal => (
-                                <div key={goal.id} className="p-4 border rounded-lg shadow-sm bg-white">
-                                    <div className="flex justify-between items-center mb-2">
-                                        <h3 className="text-md font-semibold text-gray-800">{goal.title}</h3>
-                                        <button
-                                            className='text-blue-500 hover:underline hover:cursor-pointer'
-                                            onClick={() => setEditingGoal(goal)}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {['not-started', 'in-progress', 'done'].map((state) => (
+                    <div key={state} className="p-6 rounded-lg shadow-xl bg-white">
+                        <h2
+                            className={`text-lg font-semibold mb-5 text-center ${state === 'not-started'
+                                ? 'text-gray-700'
+                                : state === 'in-progress'
+                                    ? 'text-amber-500'
+                                    : 'text-green-500'
+                                }`}
+                        >
+                            {state === 'not-started'
+                                ? 'Not Started'
+                                : state === 'in-progress'
+                                    ? 'In Progress'
+                                    : 'Done'}
+                        </h2>
+                        <div className="space-y-4">
+                            {weeklyGoals.filter((goal) => goal.state === state).length > 0 ? (
+                                weeklyGoals
+                                    .filter((goal) => goal.state === state)
+                                    .map((goal) => (
+                                        <div
+                                            key={goal.id}
+                                            className={`p-4 border-2 rounded-lg shadow-sm ${state === 'not-started'
+                                                ? 'border-gray-200 bg-gray-100'
+                                                : state === 'in-progress'
+                                                    ? 'border-yellow-200 bg-yellow-50'
+                                                    : 'border-green-200 bg-green-50'
+                                                }`}
                                         >
-                                            Edit
-                                        </button>
-                                    </div>
-                                    <ul className="list-disc pl-5">
-                                        {goal.tasks.map((t) => (
-                                            <li key={t.id} className="flex items-center gap-2">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={t.completed}
-                                                    onChange={(e) => handleToggleTask(t.id, e.target.checked)}
-                                                />
-                                                <span className={t.completed ? "line-through text-gray-400" : ""}>
-                                                    {t.title}
-                                                </span>
-                                            </li>
-                                        ))}
-                                    </ul>
-
-                                </div>
-                            ))
-                        ) : (
-                            <p className="text-gray-500 text-center">No goals in this category.</p>
-                        )}
+                                            <div className="flex justify-between items-center mb-2">
+                                                <h3 className="text-md font-semibold text-gray-800">{goal.title}</h3>
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        className="text-blue-500 hover:underline hover:cursor-pointer"
+                                                        onClick={() => setEditingGoal(goal)}
+                                                    >
+                                                        Edit
+                                                    </button>
+                                                    <button
+                                                        className="text-red-500 hover:underline hover:cursor-pointer"
+                                                        onClick={() => handleDeleteGoal(goal.id)}
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <ul className="list-disc pl-5">
+                                                {goal.tasks.map((t) => (
+                                                    <li key={t.id} className="flex items-center gap-2">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={t.completed}
+                                                            onChange={(e) => handleToggleTask(Number(t.id), e.target.checked)}
+                                                        />
+                                                        <span className={t.completed ? 'line-through text-gray-400' : ''}>
+                                                            {t.title}
+                                                        </span>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    ))
+                            ) : (
+                                <p className="text-gray-500 text-center">No goals in this category.</p>
+                            )}
+                        </div>
                     </div>
-                </div>
-
-                {/* In Progress */}
-                <div className='p-6 rounded-lg shadow-xl bg-white'>
-                    <h2 className="text-lg font-semibold mb-5 text-center text-amber-500">In Progress</h2>
-                    <div className="space-y-4">
-                        {weeklyGoals.filter(goal => goal.state === 'in-progress').length > 0 ? (
-                            weeklyGoals.filter(goal => goal.state === 'in-progress').map(goal => (
-                                <div key={goal.id} className="p-4 border-2 border-yellow-200 rounded-lg shadow-sm bg-yellow-50">
-                                    <div className='flex justify-between items-center mb-4'>
-                                        <h3 className="text-md font-semibold text-gray-800">{goal.title}</h3>
-                                        <button
-                                            className='text-blue-500 hover:underline hover:cursor-pointer'
-                                            onClick={() => setEditingGoal(goal)}
-                                        >
-                                            Edit
-                                        </button>
-                                    </div>
-                                    <ul className="list-disc pl-5">
-                                        {goal.tasks.map((t) => (
-                                            <li key={t.id} className="flex items-center gap-2">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={t.completed}
-                                                    onChange={(e) => handleToggleTask(t.id, e.target.checked)}
-                                                />
-                                                <span className={t.completed ? "line-through text-gray-400" : ""}>
-                                                    {t.title}
-                                                </span>
-                                            </li>
-                                        ))}
-                                    </ul>
-
-                                </div>
-                            ))
-                        ) : (
-                            <p className="text-gray-500 text-center">No goals in this category.</p>
-                        )}
-                    </div>
-                </div>
-
-                {/* Done */}
-                <div className='p-6 rounded-lg shadow-xl bg-white'>
-                    <h2 className="text-lg font-semibold text-green-500 mb-5 text-center">Done</h2>
-                    <div className="space-y-4">
-                        {weeklyGoals.filter(goal => goal.state === 'done').length > 0 ? (
-                            weeklyGoals.filter(goal => goal.state === 'done').map(goal => (
-                                <div key={goal.id} className="p-4 border-2 border-green-200 rounded-lg shadow-sm bg-green-50">
-                                    <div className="flex justify-between items-center mb-2">
-                                        <h3 className="text-md font-semibold text-gray-800">{goal.title}</h3>
-                                        <button
-                                            className='text-blue-500 hover:underline hover:cursor-pointer'
-                                            onClick={() => setEditingGoal(goal)}
-                                        >
-                                            Edit
-                                        </button>
-                                    </div>
-                                    <ul className="list-disc pl-5">
-                                        {goal.tasks.map((t) => (
-                                            <li key={t.id} className="flex items-center gap-2">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={t.completed}
-                                                    onChange={(e) => handleToggleTask(t.id, e.target.checked)}
-                                                />
-                                                <span className={t.completed ? "line-through text-gray-400" : ""}>
-                                                    {t.title}
-                                                </span>
-                                            </li>
-                                        ))}
-                                    </ul>
-
-                                </div>
-                            ))
-                        ) : (
-                            <p className="text-gray-500 text-center">No goals in this category.</p>
-                        )}
-                    </div>
-                </div>
+                ))}
             </div>
 
-            {/* Add & Edit Modals */}
             <AddWeeklyGoalModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
@@ -253,7 +300,6 @@ const WeeklyGoalsView: React.FC = () => {
                     onSave={handleUpdateGoal}
                 />
             )}
-
         </div>
     );
 };

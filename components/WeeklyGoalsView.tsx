@@ -262,14 +262,31 @@ const WeeklyGoalsView: React.FC = () => {
                                                     </button>
                                                 </div>
                                             </div>
-                                            <ul className="list-disc pl-5">
+                                            <ul className="list-disc pl-1">
                                                 {goal.tasks.map((t) => (
                                                     <li key={t.id} className="flex items-center gap-2">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={t.completed}
-                                                            onChange={(e) => handleToggleTask(Number(t.id), e.target.checked)}
-                                                        />
+                                                        <label className="flex items-center space-x-2 cursor-pointer">
+                                                            {/* Hidden native checkbox */}
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={t.completed}
+                                                                onChange={(e) => handleToggleTask(Number(t.id), e.target.checked)}
+                                                                className="hidden"
+                                                            />
+
+                                                            {/* Custom checkbox */}
+                                                            <span className={`w-5 h-5 flex-shrink-0 border-2 rounded-full flex items-center justify-center transition-colors
+    ${t.completed ? 'bg-green-500 border-green-500' : 'bg-gray-100 border-gray-400'}`}>
+                                                                {t.completed && (
+                                                                    <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                                                        <polyline points="20 6 9 17 4 12" />
+                                                                    </svg>
+                                                                )}
+                                                            </span>
+
+                                                            
+                                                        </label>
+
                                                         <span className={t.completed ? 'line-through text-gray-400' : ''}>
                                                             {t.title}
                                                         </span>

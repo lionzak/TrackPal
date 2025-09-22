@@ -77,7 +77,7 @@ const EditWeeklyGoalModal: React.FC<EditWeeklyGoalModalProps> = ({
 
   const handleCancel = () => {
     if (goal) {
-      setTitle(goal.title); 
+      setTitle(goal.title);
       setState(goal.state);
       setTasks([...goal.tasks]);
     }
@@ -132,25 +132,57 @@ const EditWeeklyGoalModal: React.FC<EditWeeklyGoalModalProps> = ({
               <p className="text-gray-500 text-sm italic">No tasks yet. Click "Add Task" to get started.</p>
             ) : (
               tasks.map(task => (
-                <div key={task.id} className="flex items-center gap-2 p-2 border border-gray-200 rounded">
-                  <input
-                    type="checkbox"
-                    checked={task.completed}
-                    onChange={(e) => handleTaskCompletedChange(task.id, e.target.checked)}
-                  />
-                  <input
-                    type="text"
-                    value={task.title}
-                    onChange={(e) => handleTaskTitleChange(task.id, e.target.value)}
-                    placeholder="Enter task title"
-                    className="flex-1 border-0 outline-none bg-transparent"
-                  />
-                  <button
-                    onClick={() => handleRemoveTask(task.id)}
-                    className="text-red-500 hover:text-red-700 text-sm"
-                  >
-                    Remove
-                  </button>
+                <div
+                  key={task.id}
+                  className="flex items-center gap-2 p-2 border border-gray-200 rounded flex-wrap"
+                >
+                  <label className="flex items-center space-x-2 cursor-pointer flex-1 min-w-0">
+                    {/* Hidden native checkbox */}
+                    <input
+                      type="checkbox"
+                      checked={task.completed}
+                      onChange={(e) => handleTaskCompletedChange(task.id, e.target.checked)}
+                      className="hidden"
+                    />
+
+                    {/* Custom checkbox */}
+                    <span
+                      className={`w-6 h-6 flex-shrink-0 border-2 rounded-full flex items-center justify-center transition-colors
+                        ${task.completed ? "bg-green-500 border-green-500" : "bg-gray-100 border-gray-400"}`}
+                    >
+                      {task.completed && (
+                        <svg
+                          className="w-3 h-3 text-white"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      )}
+                    </span>
+
+                    {/* Task title input */}
+                    <input
+                      type="text"
+                      value={task.title}
+                      onChange={(e) => handleTaskTitleChange(task.id, e.target.value)}
+                      placeholder="Enter task title"
+                      className="flex-1 border-0 outline-none bg-transparent text-gray-900 min-w-0"
+                    />
+                  </label>
+
+                  <div className="flex-shrink-0 ml-2 sm:ml-0 sm:order-none order-2">
+                    <button
+                      onClick={() => handleRemoveTask(task.id)}
+                      className="text-red-500 hover:text-red-700 text-sm"
+                    >
+                      Remove
+                    </button>
+                  </div>
                 </div>
               ))
             )}

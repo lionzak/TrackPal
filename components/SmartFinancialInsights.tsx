@@ -3,7 +3,10 @@
 import { getMonthlySummary, Transaction } from "@/utils/HelperFunc";
 import React, { useState } from "react";
 
-export const SmartFinancialInsights = ({ transactions, trendData, spendingDistributionData }: { transactions: Transaction[], trendData: { month: string; budget: number; spent: number }[], spendingDistributionData: { name: string; value: number }[] }) => {
+export const SmartFinancialInsights = ({ transactions, trendData, spendingDistributionData }: {
+  transactions: Transaction[], trendData: { month: string; budget: number; spent: number }[]
+    , spendingDistributionData: { name: string; limit: number, spent: number }[]
+}) => {
   const [insights, setInsights] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 

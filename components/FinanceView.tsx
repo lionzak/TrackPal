@@ -17,6 +17,9 @@ const FinanceView: React.FC = () => {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [activeTab, setActiveTab] = useState("overview");
 
+    // Loading state
+    const [loading, setLoading] = useState(true);
+
     // Form state
     const [formData, setFormData] = useState<Transaction>({
         date: "",
@@ -47,7 +50,6 @@ const FinanceView: React.FC = () => {
     const [monthlyBudget, setMonthlyBudget] = useState<number>(0);
     const [monthlyBudgetInput, setMonthlyBudgetInput] = useState<string>("");   // ✅ input field
 
-
     // --- Helper to get current user ---
     const getCurrentUser = async () => {
         const { data: { user }, error } = await supabase.auth.getUser();
@@ -74,7 +76,6 @@ const FinanceView: React.FC = () => {
 
     // --- Fetch budget from Supabase ---
     const fetchBudget = async () => {
-
         const user = await getCurrentUser();
         if (!user) return;
 
@@ -88,8 +89,12 @@ const FinanceView: React.FC = () => {
     };
 
     useEffect(() => {
-        fetchTransactions();
-        fetchBudget();
+        const loadData = async () => {
+            setLoading(true);
+            await Promise.all([fetchTransactions(), fetchBudget()]);
+            setLoading(false);
+        };
+        loadData();
     }, []);
 
     // --- Calculate budget totals ---
@@ -254,7 +259,15 @@ const FinanceView: React.FC = () => {
         }
     }, [transactions]);
 
-
+    // --- Loading indicator ---
+    if (loading) {
+        return (
+            <div className="flex justify-center items-center h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-500 border-solid"></div>
+                <span className="ml-4 text-lg text-gray-700">Loading...</span>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-4 sm:space-y-6 ">
@@ -320,8 +333,18 @@ const FinanceView: React.FC = () => {
             />
 
             {/*Smart Insights */}
-            <SmartFinancialInsights trendData={trendData}
-                spendingDistributionData={spendingDistributionData} transactions={transactions}     />
+            {trendData.length > 0 && (
+                <SmartFinancialInsights
+                    transactions={transactions}
+                    trendData={trendData}
+                    spendingDistributionData={budget.map(item => ({
+                        name: item.category,
+                        limit: item.budget,
+                        spent: budgetTotals[item.category] || 0,
+                    }))}
+                />
+            )}
+
 
             {isEditModalOpen && editingTransaction && (
                 <TransactionEditingModal

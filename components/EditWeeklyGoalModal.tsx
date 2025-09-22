@@ -9,7 +9,6 @@ interface EditWeeklyGoalModalProps {
   onSave: (goal: WeeklyGoal) => void;
 }
 
-let tempTaskIdCounter = -1; // negative IDs for new tasks
 
 const EditWeeklyGoalModal: React.FC<EditWeeklyGoalModalProps> = ({
   isOpen,
@@ -129,7 +128,7 @@ const EditWeeklyGoalModal: React.FC<EditWeeklyGoalModalProps> = ({
 
           <div className="space-y-2 max-h-60 overflow-y-auto">
             {tasks.length === 0 ? (
-              <p className="text-gray-500 text-sm italic">No tasks yet. Click "Add Task" to get started.</p>
+              <p className="text-gray-500 text-sm italic">No tasks yet. Click &quot;Add Task&quot; to get started.</p>
             ) : (
               tasks.map(task => (
                 <div

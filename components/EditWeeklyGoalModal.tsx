@@ -19,6 +19,7 @@ const EditWeeklyGoalModal: React.FC<EditWeeklyGoalModalProps> = ({
   const [title, setTitle] = useState("");
   const [state, setState] = useState<WeeklyGoal["state"]>("not-started");
   const [tasks, setTasks] = useState<WeeklyGoalTask[]>([]);
+  const [priority, setPriority] = useState<"low" | "medium" | "high">(goal ? goal.priority : "medium");
 
   useEffect(() => {
     if (goal) {
@@ -69,6 +70,7 @@ const EditWeeklyGoalModal: React.FC<EditWeeklyGoalModalProps> = ({
       title: title.trim(),
       state,
       tasks: validTasks,
+      priority,
     });
 
     onClose();
@@ -111,6 +113,19 @@ const EditWeeklyGoalModal: React.FC<EditWeeklyGoalModalProps> = ({
             <option value="not-started">Not Started</option>
             <option value="in-progress">In Progress</option>
             <option value="done">Done</option>
+          </select>
+        </div>
+        {/* Priority */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium mb-2">Priority</label>
+          <select
+            value={priority}
+            onChange={(e) => setPriority(e.target.value as "low" | "medium" | "high")}
+            className="w-full border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
           </select>
         </div>
 

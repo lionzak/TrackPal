@@ -4,7 +4,6 @@ import { autoTable } from "jspdf-autotable";
 import { unparse } from "papaparse";
 import { startOfWeek, endOfWeek } from "date-fns";
 
-
 export interface Transaction {
   id?: number;
   date: string;
@@ -318,3 +317,48 @@ export const getThisWeekRange = () => {
     end: weekEnd.toISOString(),
   };
 };
+
+export const generateQuote = () => {
+  const quotes = [
+    "Stay focused and never give up!",
+    "Every small step counts towards your goal.",
+    "Consistency is the key to success.",
+    "Believe in yourself and all that you are.",
+    "The only way to do great work is to love what you do.",
+    "Believe you can and you're halfway there.",
+    "The future belongs to those who believe in the beauty of their dreams.",
+    "Success is not final; failure is not fatal: it is the courage to continue that counts.",
+    "The best time to plant a tree was 20 years ago. The second best time is now.",
+    "Your time is limited, don't waste it living someone else's life.",
+  ];
+
+  const randomIndex = Math.floor(Math.random() * quotes.length);
+  return quotes[randomIndex];
+};
+
+export async function getWeeklyProgress() {
+  const { start, end } = getThisWeekRange();
+
+  const { data, error } = await supabase
+    .from("weekly_goals")
+    .select("id, tasks:weekly_goal_tasks(completed)")
+    .gte("created_at", start)
+    .lte("created_at", end);
+
+  if (error) {
+    console.error("Error fetching weekly progress:", error);
+    return { completed: 0, total: 0 };
+  }
+
+  let completed = 0;
+  let total = 0;
+
+  data.forEach((goal) => {
+    goal.tasks.forEach((task) => {
+      total++;
+      if (task.completed) completed++;
+    });
+  });
+
+  return { completed, total };
+}

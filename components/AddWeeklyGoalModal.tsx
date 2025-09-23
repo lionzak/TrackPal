@@ -7,6 +7,7 @@ interface AddGoalModalProps {
         title: string;
         state: string;
         tasks: { title: string; completed: boolean }[];
+        priority: "low" | "medium" | "high";
     }) => void;
 }
 
@@ -14,6 +15,7 @@ export default function AddWeeklyGoalModal({ isOpen, onClose, onSave }: AddGoalM
     const [title, setTitle] = useState("");
     const [state, setState] = useState("not-started");
     const [tasks, setTasks] = useState<{ title: string; completed: boolean }[]>([]);
+    const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
 
     if (!isOpen) return null;
 
@@ -36,10 +38,11 @@ export default function AddWeeklyGoalModal({ isOpen, onClose, onSave }: AddGoalM
             alert("Please enter a goal title");
             return;
         }
-        onSave({ title, state, tasks });
+        onSave({ title, state, tasks, priority });
         setTitle("");
         setState("not-started");
         setTasks([]);
+        setPriority("medium");
         onClose();
     };
 
@@ -68,6 +71,17 @@ export default function AddWeeklyGoalModal({ isOpen, onClose, onSave }: AddGoalM
                     <option value="not-started">Not Started</option>
                     <option value="in-progress">In Progress</option>
                     <option value="done">Done</option>
+                </select>
+                {/* Goal Priority */}
+                <label className="block mb-2 text-sm font-medium">Goal Priority</label>
+                <select
+                    value={priority}
+                    onChange={(e) => setPriority(e.target.value as "low" | "medium" | "high")}
+                    className="w-full border rounded-lg px-3 py-2 mb-4 hover:cursor-pointer"
+                >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
                 </select>
 
                 {/* Tasks */}
@@ -99,6 +113,7 @@ export default function AddWeeklyGoalModal({ isOpen, onClose, onSave }: AddGoalM
                         + Add Task
                     </button>
                 </div>
+
 
                 {/* Actions */}
                 <div className="flex justify-end gap-3">

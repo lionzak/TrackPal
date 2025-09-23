@@ -1,6 +1,5 @@
-import React, { SetStateAction } from 'react'
+import React from 'react'
 import TransactionDropdown from './TransactionDropdown'
-import { Transaction } from '@/utils/HelperFunc'
 
 const TransactionEditingModal = ({ formData, setIsEditModalOpen, handleChange, handleDropdownChange, handleUpdateTransaction }: {formData: {
         date: string,

@@ -3,12 +3,14 @@ import React, { useEffect, useState } from 'react';
 import AddWeeklyGoalModal from './AddWeeklyGoalModal';
 import EditWeeklyGoalModal from './EditWeeklyGoalModal';
 import { WeeklyGoal } from '@/types';
-import { getThisWeekRange } from '@/utils/HelperFunc';
+import { generateQuote, getThisWeekRange } from '@/utils/HelperFunc';
+import WeeklyProgressBar from './WeeklyProgressBar';
 
 const WeeklyGoalsView: React.FC = () => {
     const [weeklyGoals, setWeeklyGoals] = useState<WeeklyGoal[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingGoal, setEditingGoal] = useState<WeeklyGoal | null>(null);
+    const [quote, setQuote] = useState("");
 
     const fetchWeeklyGoals = async () => {
         const {
@@ -26,6 +28,7 @@ const WeeklyGoalsView: React.FC = () => {
       title,
       state,
       created_at,
+      priority,
       tasks:weekly_goal_tasks(
         id,
         goal_id,
@@ -37,7 +40,8 @@ const WeeklyGoalsView: React.FC = () => {
             .eq("user_id", user.id)
             .gte("created_at", start)
             .lte("created_at", end)
-            .order("created_at", { ascending: false });
+            .order("created_at", { ascending: false }).order("priority", { ascending: false });
+        ;
 
         if (error) {
             console.error("Error fetching weekly goals:", error);
@@ -47,15 +51,16 @@ const WeeklyGoalsView: React.FC = () => {
         if (data) setWeeklyGoals(data as WeeklyGoal[]);
     };
 
-
     useEffect(() => {
         fetchWeeklyGoals();
+        setQuote(generateQuote());
     }, []);
 
     const handleSaveGoal = async (goal: {
         title: string;
         state: string;
         tasks: { title: string; completed: boolean }[];
+        priority: "low" | "medium" | "high";
     }) => {
         const {
             data: { user },
@@ -64,7 +69,7 @@ const WeeklyGoalsView: React.FC = () => {
 
         const { data: insertedGoal, error } = await supabase
             .from('weekly_goals')
-            .insert([{ user_id: user.id, title: goal.title, state: goal.state }])
+            .insert([{ user_id: user.id, title: goal.title, state: goal.state, priority: goal.priority }])
             .select('*')
             .single();
 
@@ -108,7 +113,7 @@ const WeeklyGoalsView: React.FC = () => {
             // 1. Update goal title/state
             const { error: goalError } = await supabase
                 .from('weekly_goals')
-                .update({ title: updatedGoal.title, state: updatedGoal.state })
+                .update({ title: updatedGoal.title, state: updatedGoal.state, priority: updatedGoal.priority })
                 .eq('id', updatedGoal.id)
                 .eq('user_id', user.id);
 
@@ -246,7 +251,6 @@ const WeeklyGoalsView: React.FC = () => {
         }
     };
 
-
     const handleDeleteGoal = async (goalId: number) => {
         const { error } = await supabase.from('weekly_goals').delete().eq('id', goalId);
         if (error) {
@@ -258,20 +262,29 @@ const WeeklyGoalsView: React.FC = () => {
         await fetchWeeklyGoals();
     };
 
+
     return (
         <div className="space-y-4 sm:space-y-6 text-black">
-            <div className="flex items-center gap-x-2 text-center self-center">
-                <div className="flex w-full justify-between items-center">
-                    <h1 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-0">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row items-center gap-x-2 text-center self-center w-full">
+                <div className="flex flex-col sm:flex-row w-full justify-between items-center">
+                    <h1 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2 sm:mb-0">
                         Weekly Goals 🎯
                     </h1>
+                    <p className="text-gray-600 mb-2 sm:mb-0 sm:mx-4 w-full sm:w-auto text-center sm:text-left">
+                        Quote of the day: &quot;{quote}&quot;
+                    </p>
                     <button
-                        className="ml-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition hover:cursor-pointer"
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition hover:cursor-pointer"
                         onClick={() => setIsModalOpen(true)}
                     >
                         Add Goal
                     </button>
                 </div>
+            </div>
+            
+            <div className='mb-10'>
+                <WeeklyProgressBar goals={weeklyGoals}  />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -293,6 +306,7 @@ const WeeklyGoalsView: React.FC = () => {
                         </h2>
                         <div className="space-y-4">
                             {weeklyGoals.filter((goal) => goal.state === state).length > 0 ? (
+
                                 weeklyGoals
                                     .filter((goal) => goal.state === state)
                                     .map((goal) => (
@@ -306,7 +320,20 @@ const WeeklyGoalsView: React.FC = () => {
                                                 }`}
                                         >
                                             <div className="flex justify-between items-center mb-2">
-                                                <h3 className="text-md font-semibold text-gray-800">{goal.title}</h3>
+                                                <div className='flex items-center gap-2'>
+                                                    <h3 className="text-md font-semibold text-gray-800">{goal.title}</h3>
+                                                    <span
+                                                        className={`px-2 py-1 rounded-full text-xs font-semibold
+                                                            ${goal.priority === "high" ? "bg-red-100 text-red-600" : ""}
+                                                            ${goal.priority === "medium" ? "bg-yellow-100 text-yellow-600" : ""}
+                                                            ${goal.priority === "low" ? "bg-green-100 text-green-600" : ""}
+                                                        `}
+                                                    >
+                                                        {goal.priority.toUpperCase()}
+                                                    </span>
+
+                                                </div>
+
                                                 <div className="flex gap-2">
                                                     <button
                                                         className="text-blue-500 hover:underline hover:cursor-pointer"
@@ -352,7 +379,7 @@ const WeeklyGoalsView: React.FC = () => {
                                                         </span>
                                                     </li>
                                                 ))}
-                                                
+
                                             </ul>
                                             <div className="text-xs text-gray-500 mt-2 text-right">
                                                 Created at: {new Date(goal.created_at).toLocaleDateString()}

@@ -21,7 +21,7 @@ const ExportMenu = ({ transactions }: { transactions: Transaction[] }) => {
         onChange={(e) => setFormat(e.target.value)}
         className="border px-3 py-2 rounded-lg bg-gray-600 text-white hover:cursor-pointer"
       >
-        <option value="">Choose format</option>
+        <option value="" disabled>Choose format</option>
         <option value="csv">CSV</option>
         <option value="pdf">PDF</option>
       </select>

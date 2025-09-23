@@ -11,4 +11,5 @@ export interface WeeklyGoal {
   title: string;
   state: "not-started" | "in-progress" | "done";
   tasks: WeeklyGoalTask[];
+  created_at: string;
 }

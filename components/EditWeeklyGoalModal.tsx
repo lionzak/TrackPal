@@ -120,7 +120,7 @@ const EditWeeklyGoalModal: React.FC<EditWeeklyGoalModalProps> = ({
             <label className="block text-sm font-medium">Tasks</label>
             <button
               onClick={handleAddTask}
-              className="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm"
+              className="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm hover:cursor-pointer transition"
             >
               + Add Task
             </button>
@@ -177,7 +177,7 @@ const EditWeeklyGoalModal: React.FC<EditWeeklyGoalModalProps> = ({
                   <div className="flex-shrink-0 ml-2 sm:ml-0 sm:order-none order-2">
                     <button
                       onClick={() => handleRemoveTask(task.id)}
-                      className="text-red-500 hover:text-red-700 text-sm"
+                      className="text-red-500 hover:text-red-700 text-sm hover:cursor-pointer"
                     >
                       Remove
                     </button>
@@ -190,10 +190,10 @@ const EditWeeklyGoalModal: React.FC<EditWeeklyGoalModalProps> = ({
 
         {/* Actions */}
         <div className="flex justify-end gap-3">
-          <button onClick={handleCancel} className="px-4 py-2 border border-gray-300 text-gray-700 rounded hover:bg-gray-50">
+          <button onClick={handleCancel} className="px-4 py-2 border border-gray-300 text-gray-700 rounded hover:bg-gray-50 hover:cursor-pointer">
             Cancel
           </button>
-          <button onClick={handleSave} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+          <button onClick={handleSave} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 hover:cursor-pointer">
             Save Changes
           </button>
         </div>

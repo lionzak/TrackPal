@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import AddWeeklyGoalModal from './AddWeeklyGoalModal';
 import EditWeeklyGoalModal from './EditWeeklyGoalModal';
 import { WeeklyGoal } from '@/types';
+import { getThisWeekRange } from '@/utils/HelperFunc';
 
 const WeeklyGoalsView: React.FC = () => {
     const [weeklyGoals, setWeeklyGoals] = useState<WeeklyGoal[]>([]);
@@ -15,29 +16,37 @@ const WeeklyGoalsView: React.FC = () => {
         } = await supabase.auth.getUser();
         if (!user) return;
 
+        const { start, end } = getThisWeekRange();
+
         const { data, error } = await supabase
-            .from('weekly_goals')
-            .select(`
+            .from("weekly_goals")
+            .select(
+                `
+      id,
+      title,
+      state,
+      created_at,
+      tasks:weekly_goal_tasks(
         id,
+        goal_id,
         title,
-        state,
-        tasks:weekly_goal_tasks(
-          id,
-          goal_id,
-          title,
-          completed
-        )
-      `)
-            .eq('user_id', user.id)
-            .order('created_at', { ascending: false });
+        completed
+      )
+    `
+            )
+            .eq("user_id", user.id)
+            .gte("created_at", start)
+            .lte("created_at", end)
+            .order("created_at", { ascending: false });
 
         if (error) {
-            console.error('Error fetching weekly goals:', error);
+            console.error("Error fetching weekly goals:", error);
             return;
         }
 
         if (data) setWeeklyGoals(data as WeeklyGoal[]);
     };
+
 
     useEffect(() => {
         fetchWeeklyGoals();
@@ -170,22 +179,73 @@ const WeeklyGoalsView: React.FC = () => {
         }
     };
 
-
-
     const handleToggleTask = async (taskId: number, completed: boolean) => {
-        const { data, error } = await supabase.rpc('update_weekly_goal_task_state', {
-            p_task_id: taskId,
-            p_completed: completed,
-        });
+        try {
+            // 1. Update the task state
+            const { data: updatedTask, error: taskError } = await supabase
+                .rpc("update_weekly_goal_task_state", {
+                    p_task_id: taskId,
+                    p_completed: completed,
+                });
 
-        if (error) {
-            console.error('Error updating task state:', error);
-            return;
+            if (taskError) {
+                console.error("Error updating task state:", taskError);
+                return;
+            }
+
+            // 2. Get the goal_id for this task
+            const { data: taskData, error: fetchTaskError } = await supabase
+                .from("weekly_goal_tasks")
+                .select("goal_id")
+                .eq("id", taskId)
+                .single();
+
+            if (fetchTaskError || !taskData) {
+                console.error("Error fetching task goal_id:", fetchTaskError);
+                return;
+            }
+
+            const goalId = taskData.goal_id;
+
+            // 3. Get all tasks of this goal
+            const { data: tasks, error: tasksError } = await supabase
+                .from("weekly_goal_tasks")
+                .select("id, completed")
+                .eq("goal_id", goalId);
+
+            if (tasksError || !tasks) {
+                console.error("Error fetching tasks:", tasksError);
+                return;
+            }
+
+            // 4. Determine new goal state
+            const total = tasks.length;
+            const completedCount = tasks.filter((t) => t.completed).length;
+
+            let newState = "not-started";
+            if (completedCount === total) {
+                newState = "done";
+            } else if (completedCount > 0) {
+                newState = "in-progress";
+            }
+
+            // 5. Update the goal state
+            const { error: goalError } = await supabase
+                .from("weekly_goals")
+                .update({ state: newState })
+                .eq("id", goalId);
+
+            if (goalError) {
+                console.error("Error updating goal state:", goalError);
+            }
+
+            // 6. Refetch goals for UI consistency
+            await fetchWeeklyGoals();
+        } catch (err) {
+            console.error("Unexpected error:", err);
         }
-
-        // Refetch goals to ensure consistency
-        await fetchWeeklyGoals();
     };
+
 
     const handleDeleteGoal = async (goalId: number) => {
         const { error } = await supabase.from('weekly_goals').delete().eq('id', goalId);
@@ -284,7 +344,7 @@ const WeeklyGoalsView: React.FC = () => {
                                                                 )}
                                                             </span>
 
-                                                            
+
                                                         </label>
 
                                                         <span className={t.completed ? 'line-through text-gray-400' : ''}>
@@ -292,8 +352,13 @@ const WeeklyGoalsView: React.FC = () => {
                                                         </span>
                                                     </li>
                                                 ))}
+                                                
                                             </ul>
+                                            <div className="text-xs text-gray-500 mt-2 text-right">
+                                                Created at: {new Date(goal.created_at).toLocaleDateString()}
+                                            </div>
                                         </div>
+
                                     ))
                             ) : (
                                 <p className="text-gray-500 text-center">No goals in this category.</p>

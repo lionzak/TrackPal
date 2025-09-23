@@ -2,6 +2,8 @@ import { supabase } from "@/lib/supabaseClient";
 import jsPDF from "jspdf";
 import { autoTable } from "jspdf-autotable";
 import { unparse } from "papaparse";
+import { startOfWeek, endOfWeek } from "date-fns";
+
 
 export interface Transaction {
   id?: number;
@@ -306,3 +308,13 @@ function calcPercentages({
     balancePctAll,
   };
 }
+
+export const getThisWeekRange = () => {
+  const now = new Date();
+  const weekStart = startOfWeek(now, { weekStartsOn: 1 }); // Monday = 1
+  const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
+  return {
+    start: weekStart.toISOString(),
+    end: weekEnd.toISOString(),
+  };
+};

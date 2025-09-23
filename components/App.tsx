@@ -8,6 +8,7 @@ import WeeklyGoalsView from '@/components/WeeklyGoalsView';
 import FinanceView from '@/components/FinanceView';
 import Navbar from '@/components/Navbar';
 import LogoutButton from '@/components/LogoutButton';
+import Link from 'next/link';
 
 interface AppProps {
   displayName: string;
@@ -24,12 +25,14 @@ const App: React.FC<AppProps> = ({ displayName }) => {
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <div className="flex items-center space-x-2 flex-shrink-0">
-              <img
-              src="/logo_fit.png"
-              alt="App Logo"
-              className="h-10 w-auto sm:h-10 md:h-12 lg:h-14 xl:h-16"
-              style={{ objectFit: 'contain' }}
-              />
+              <Link href="/dashboard">
+                <img
+                src="/logo_fit.png"
+                alt="App Logo"
+                className="h-10 w-auto sm:h-10 md:h-12 lg:h-14 xl:h-12"
+                style={{ objectFit: 'contain' }}
+                />
+              </Link>
             </div>
 
             {/* Desktop Navigation */}

@@ -1,7 +1,7 @@
 import { WeeklyGoal } from '@/types'
 import React from 'react'
 
-const WeeklyGoalsCards = ({ weeklyGoals, setEditingGoal , handleDeleteGoal, handleToggleTask}: {weeklyGoals: WeeklyGoal[], setEditingGoal: (goal: WeeklyGoal) => void, handleDeleteGoal: (goalId: number) => void, handleToggleTask: (taskId: number, completed: boolean) => void}) => {
+const WeeklyGoalsCards = ({ weeklyGoals, setEditingGoal, handleDeleteGoal, handleToggleTask }: { weeklyGoals: WeeklyGoal[], setEditingGoal: (goal: WeeklyGoal) => void, handleDeleteGoal: (goalId: number) => void, handleToggleTask: (taskId: number, completed: boolean) => void }) => {
     return (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {['not-started', 'in-progress', 'done'].map((state) => (
@@ -97,11 +97,31 @@ const WeeklyGoalsCards = ({ weeklyGoals, setEditingGoal , handleDeleteGoal, hand
                                             ))}
 
                                         </ul>
-                                        <div className='flex'>
+                                        <div className='flex items-center justify-between mt-3'>
                                             {goal.deadline && (
-                                                <div className="text-xs text-gray-500 mt-2">
-                                                    Deadline: {new Date(goal.deadline).toLocaleDateString()}
-                                                </div>
+                                                <p className="flex items-center gap-1">
+                                                    {(() => {
+                                                        const daysLeft = Math.ceil(
+                                                            (new Date(goal.deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
+                                                        );
+                                                        let emoji = '';
+                                                        if (daysLeft > 3) {
+                                                            emoji = '🟢';
+                                                        } else if (daysLeft >= 1) {
+                                                            emoji = '🟡';
+                                                        } else {
+                                                            emoji = '🔴';
+                                                        }
+                                                        return (
+                                                            <>
+                                                                <span>{emoji}</span>
+                                                                <span>
+                                                                    {daysLeft > 0 ? `${daysLeft} days left` : "Overdue!"}
+                                                                </span>
+                                                            </>
+                                                        );
+                                                    })()}
+                                                </p>
                                             )}
                                             <div className="text-xs text-gray-500 mt-2 text-right">
                                                 Created at: {new Date(goal.created_at).toLocaleDateString()}

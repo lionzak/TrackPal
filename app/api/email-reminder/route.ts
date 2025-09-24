@@ -64,8 +64,9 @@ export async function GET() {
     }
 
     return NextResponse.json({ message: `✅ Sent ${sent} reminders` });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Email reminder error:", err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    const errorMessage = err instanceof Error ? err.message : "Unknown error";
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

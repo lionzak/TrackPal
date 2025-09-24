@@ -20,6 +20,7 @@ const EditWeeklyGoalModal: React.FC<EditWeeklyGoalModalProps> = ({
   const [state, setState] = useState<WeeklyGoal["state"]>("not-started");
   const [tasks, setTasks] = useState<WeeklyGoalTask[]>([]);
   const [priority, setPriority] = useState<"low" | "medium" | "high">(goal ? goal.priority : "medium");
+  const [deadline, setDeadline] = useState<string | null>(goal ? goal.deadline : null);
 
   useEffect(() => {
     if (goal) {
@@ -71,6 +72,7 @@ const EditWeeklyGoalModal: React.FC<EditWeeklyGoalModalProps> = ({
       state,
       tasks: validTasks,
       priority,
+      deadline,
     });
 
     onClose();
@@ -127,6 +129,16 @@ const EditWeeklyGoalModal: React.FC<EditWeeklyGoalModalProps> = ({
             <option value="medium">Medium</option>
             <option value="high">High</option>
           </select>
+        </div>
+        {/* Deadline */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium mb-2">Deadline</label>
+          <input
+            type="date"
+            value={deadline || ""}
+            onChange={(e) => setDeadline(e.target.value)}
+            className="w-full border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
         </div>
 
         {/* Tasks */}

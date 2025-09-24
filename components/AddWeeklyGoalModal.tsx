@@ -8,6 +8,7 @@ interface AddGoalModalProps {
         state: string;
         tasks: { title: string; completed: boolean }[];
         priority: "low" | "medium" | "high";
+        deadline: string | null;
     }) => void;
 }
 
@@ -16,6 +17,7 @@ export default function AddWeeklyGoalModal({ isOpen, onClose, onSave }: AddGoalM
     const [state, setState] = useState("not-started");
     const [tasks, setTasks] = useState<{ title: string; completed: boolean }[]>([]);
     const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
+    const [deadline, setDeadline] = useState<string | null>(null);
 
     if (!isOpen) return null;
 
@@ -38,11 +40,12 @@ export default function AddWeeklyGoalModal({ isOpen, onClose, onSave }: AddGoalM
             alert("Please enter a goal title");
             return;
         }
-        onSave({ title, state, tasks, priority });
+        onSave({ title, state, tasks, priority, deadline });
         setTitle("");
         setState("not-started");
         setTasks([]);
         setPriority("medium");
+        setDeadline(null);
         onClose();
     };
 
@@ -83,6 +86,14 @@ export default function AddWeeklyGoalModal({ isOpen, onClose, onSave }: AddGoalM
                     <option value="medium">Medium</option>
                     <option value="high">High</option>
                 </select>
+                {/* Goal Deadline */}
+                <label className="block mb-2 text-sm font-medium">Goal Deadline</label>
+                <input
+                    type="date"
+                    value={deadline || ""}
+                    onChange={(e) => setDeadline(e.target.value)}
+                    className="w-full border rounded-lg px-3 py-2 mb-4"
+                />
 
                 {/* Tasks */}
                 <div className="mb-4">

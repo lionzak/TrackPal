@@ -13,4 +13,5 @@ export interface WeeklyGoal {
   tasks: WeeklyGoalTask[];
   created_at: string;
   priority: "low" | "medium" | "high"; // new
+  deadline: string | null; // new
 }

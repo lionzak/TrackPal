@@ -87,7 +87,7 @@ export default function AddWeeklyGoalModal({ isOpen, onClose, onSave }: AddGoalM
                     <option value="high">High</option>
                 </select>
                 {/* Goal Deadline */}
-                <label className="block mb-2 text-sm font-medium">Goal Deadline</label>
+                <label className="block mb-2 text-sm font-medium">Goal Deadline (Optional)</label>
                 <input
                     type="date"
                     value={deadline || ""}

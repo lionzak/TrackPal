@@ -330,6 +330,17 @@ export const generateQuote = () => {
     "Success is not final; failure is not fatal: it is the courage to continue that counts.",
     "The best time to plant a tree was 20 years ago. The second best time is now.",
     "Your time is limited, don't waste it living someone else's life.",
+  "Success is the sum of small efforts repeated daily.",
+  "Dream big, start small, but most importantly, start.",
+  "Your future is created by what you do today, not tomorrow.",
+  "Courage doesn’t mean you don’t get afraid, it means you don’t let fear stop you.",
+  "Discipline is choosing between what you want now and what you want most.",
+  "The best way to predict the future is to create it.",
+  "Growth begins at the end of your comfort zone.",
+  "Don’t count the days, make the days count.",
+  "Consistency beats intensity over the long run.",
+  "Opportunities don’t happen, you create them."
+
   ];
 
   const randomIndex = Math.floor(Math.random() * quotes.length);

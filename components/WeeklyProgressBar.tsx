@@ -4,7 +4,7 @@ import { getWeeklyProgress } from "@/utils/HelperFunc";
 import { supabase } from "@/lib/supabaseClient";
 import { WeeklyGoal } from "@/types";
 
-const WeeklyProgressBar: React.FC<{ goals: WeeklyGoal[] }> = ({goals}) => {
+const WeeklyProgressBar: React.FC<{ goals: WeeklyGoal[] }> = ({ goals }) => {
     const [progress, setProgress] = useState(0);
 
     const fetchProgress = async () => {
@@ -37,7 +37,7 @@ const WeeklyProgressBar: React.FC<{ goals: WeeklyGoal[] }> = ({goals}) => {
                     fetchProgress();
                 }
             )
-            .subscribe((status) => {
+            .subscribe(() => {
             });
 
         return () => {

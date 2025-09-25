@@ -35,8 +35,7 @@ const EditWeeklyGoalModal: React.FC<EditWeeklyGoalModalProps> = ({
     }
   }, [goal]);
 
-  if (!isOpen || !goal) return null;
-
+  
   // Auto-update goal state based on tasks
   useEffect(() => {
     if (tasks.length === 0 || tasks.every(t => t.title.trim() === "" || !t.completed)) {
@@ -47,7 +46,8 @@ const EditWeeklyGoalModal: React.FC<EditWeeklyGoalModalProps> = ({
       setState("in-progress");
     }
   }, [tasks]);
-
+  
+  if (!isOpen || !goal) return null;
 
 
   const handleAddTask = () => {

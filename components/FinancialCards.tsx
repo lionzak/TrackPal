@@ -8,7 +8,7 @@ const FinancialCards = ({ totalBalance, income, spendings, savings }: { totalBal
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 sm:gap-6">
             {/* Total Balance */}
-            <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-lg shadow p-4 sm:p-6">
+            <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-lg shadow p-4 sm:p-6 sm:col-span-2 lg:col-span-1">
                 <div className="flex items-center">
                     <div className="flex-shrink-0">
                         <div className="w-8 h-8 rounded-full flex items-center justify-center">
@@ -53,7 +53,7 @@ const FinancialCards = ({ totalBalance, income, spendings, savings }: { totalBal
             </div>
 
             {/* Savings */}
-            <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg shadow p-4 sm:p-6">
+            <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg shadow p-4 sm:p-6  sm:col-span-2 lg:col-span-1">
                 <div className="flex items-center">
                     <div className="flex-shrink-0">
                         <div className="w-8 h-8 rounded-full flex items-center justify-center">

@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabaseClient";
 
-export async function GET() {
+export async function GET(req: Request) {
+  if (!req.headers.get("x-vercel-cron")) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     console.log("Fetching all users...");
     const { data: users } = await supabase.from("profiles").select("*");
@@ -35,7 +39,7 @@ export async function GET() {
         weeklyGoals &&
         weeklyGoals.length > 0 &&
         weeklyGoals.every((goal) => goal.state === "done");
-        console.log(`User ${user.id} all goals completed:`, allCompleted);
+      console.log(`User ${user.id} all goals completed:`, allCompleted);
 
       if (allCompleted) {
         const newStreak = (user.weekly_streak_count || 0) + 1;

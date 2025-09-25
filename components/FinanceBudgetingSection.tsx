@@ -64,7 +64,7 @@ const FinanceBudgetingSection = ({ monthlyBudget, setMonthlyBudget, budgetTotals
                             ${Object.values(budgetTotals).reduce((sum, val) => sum + val, 0)}
                         </p>
                     </div>
-                    <div className="shadow-md p-5 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600">
+                    <div className="shadow-md p-5 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 sm:col-span-2">
                         <h4 className="font-medium">Total Remaining</h4>
                         <p className="text-lg font-bold">${(monthlyBudget - Object.values(budgetTotals).reduce((sum, val) => sum + val, 0)).toFixed(2)}</p>
                         <p className="text-sm font-md">{((monthlyBudget - Object.values(budgetTotals).reduce((sum, val) => sum + val, 0)) / monthlyBudget * 100).toFixed(0)}%</p>

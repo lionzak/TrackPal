@@ -27,7 +27,6 @@ const WeeklyProgressBar: React.FC<{ goals: WeeklyGoal[] }> = ({goals}) => {
                 "postgres_changes",
                 { event: "*", schema: "public", table: "weekly_goal_tasks" },
                 () => {
-                    console.log("Task changed, refetching progress...");
                     fetchProgress();
                 }
             )
@@ -35,12 +34,10 @@ const WeeklyProgressBar: React.FC<{ goals: WeeklyGoal[] }> = ({goals}) => {
                 "postgres_changes",
                 { event: "*", schema: "public", table: "weekly_goals" },
                 () => {
-                    console.log("Goal changed, refetching progress...");
                     fetchProgress();
                 }
             )
             .subscribe((status) => {
-                console.log("Realtime status:", status); // <- check if "SUBSCRIBED"
             });
 
         return () => {

@@ -20,7 +20,12 @@ const EditWeeklyGoalModal: React.FC<EditWeeklyGoalModalProps> = ({
   const [state, setState] = useState<WeeklyGoal["state"]>("not-started");
   const [tasks, setTasks] = useState<WeeklyGoalTask[]>([]);
   const [priority, setPriority] = useState<"low" | "medium" | "high">(goal ? goal.priority : "medium");
+
   const [deadline, setDeadline] = useState<string | null>(goal ? goal.deadline : null);
+  const tempTaskIdCounter = React.useRef(-1);
+
+
+
 
   useEffect(() => {
     if (goal) {
@@ -32,15 +37,28 @@ const EditWeeklyGoalModal: React.FC<EditWeeklyGoalModalProps> = ({
 
   if (!isOpen || !goal) return null;
 
-  let tempTaskIdCounter = -1;
+  // Auto-update goal state based on tasks
+  useEffect(() => {
+    if (tasks.length === 0 || tasks.every(t => t.title.trim() === "" || !t.completed)) {
+      setState("not-started");
+    } else if (tasks.every(t => t.completed)) {
+      setState("done");
+    } else if (tasks.some(t => t.completed)) {
+      setState("in-progress");
+    }
+  }, [tasks]);
+
+
 
   const handleAddTask = () => {
     const newTask: WeeklyGoalTask = {
-      id: tempTaskIdCounter--,
+      id: tempTaskIdCounter.current--,
       goal_id: goal!.id,
       title: "",
       completed: false,
     };
+    console.log("Adding new task:", tempTaskIdCounter);
+
     setTasks([...tasks, newTask]);
   };
 

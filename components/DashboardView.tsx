@@ -1,7 +1,7 @@
 import { useTab } from "@/hooks/TabContext";
 import { supabase } from "@/lib/supabaseClient";
 import { DailyRoutineTask, WeeklyGoal } from "@/types";
-import { getCurrentUser, getMonthlyBudget, getSumByCategory, getThisWeekRange, getTotalBalance } from "@/utils/HelperFunc";
+import { getCurrentUser, getMonthlyBudget, getSumByCategory, getThisWeekRange, getTotalBalance, Transaction } from "@/utils/HelperFunc";
 import { set } from "date-fns";
 import { useEffect, useState } from "react";
 
@@ -12,7 +12,7 @@ interface AppProps {
 const DashboardView: React.FC<AppProps> = ({ displayName }) => {
     const [dailyTasks, setDailyTasks] = useState<DailyRoutineTask[]>([]);
     const [weeklyGoals, setWeeklyGoals] = useState<WeeklyGoal[]>([]);
-    const [transactions, setTransactions] = useState<any[]>([]);
+    const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [monthlyBudget, setMonthlyBudget] = useState<number>(0);
     const [budgetTotals, setBudgetTotals] = useState<Record<string, number>>({});
     const [budget, setBudget] = useState<{ category: string; budget: number }[]>([]);
@@ -154,11 +154,6 @@ const DashboardView: React.FC<AppProps> = ({ displayName }) => {
     }, [transactions, budget]);
 
 
-    const totalTransactions = transactions.length;
-    const totalSpent = transactions.reduce((sum, t) => sum + t.amount, 0).toFixed(2);
-    const remainingBudget = (monthlyBudget - totalSpent).toFixed(2);
-    const averageSpend = (totalSpent / totalTransactions || 0).toFixed(2);
-
     const monthlySpending = [
         { month: "Sep", amount: 150.75 },
         { month: "Aug", amount: 300.50 },
@@ -250,7 +245,7 @@ const DashboardView: React.FC<AppProps> = ({ displayName }) => {
                             <p className="text-lg font-semibold text-gray-900">${totalBalance}</p>
                         </div>
                         <div className="bg-green-50 rounded-lg p-3">
-                            <p className="text-xs text-gray-500">This Month's Budget</p>
+                            <p className="text-xs text-gray-500">This Month&apos;s Budget</p>
                             <p className="text-lg font-semibold text-gray-900">${monthlyBudget}</p>
                         </div>
                         <div className="bg-red-50 rounded-lg p-3 col-span-2">

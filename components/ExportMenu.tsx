@@ -1,14 +1,14 @@
-import { exportCSV, exportPDF, Transaction } from "@/utils/HelperFunc";
+import { DistributionData, exportCSV, exportPDF, MonthlySummary, Transaction, TrendData } from "@/utils/HelperFunc";
 import { useState } from "react";
 
-const ExportMenu = ({ transactions }: { transactions: Transaction[] }) => {
+const ExportMenu = ({ transactions, monthlySummary, trendData, distributionData }: { transactions: Transaction[], monthlySummary: Record<string, MonthlySummary>, trendData: TrendData[], distributionData: DistributionData[] }) => {
   const [format, setFormat] = useState("");
 
   const handleExport = () => {
     if (format === "csv") {
       exportCSV(transactions);
     } else if (format === "pdf") {
-      exportPDF(transactions);
+      exportPDF(transactions, monthlySummary, trendData, distributionData);
     } else {
       alert("Please select a format first!");
     }

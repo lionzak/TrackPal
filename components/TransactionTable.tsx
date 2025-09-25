@@ -1,4 +1,4 @@
-import { formatCurrency, formatDate, getAmountStyles, getCategoryStyles, Transaction } from '@/utils/HelperFunc';
+import { DistributionData, formatCurrency, formatDate, getAmountStyles, getCategoryStyles, MonthlySummary, Transaction, TrendData } from '@/utils/HelperFunc';
 import React from 'react';
 import ExportMenu from './ExportMenu';
 import { LucideEdit, Trash2 } from 'lucide-react'; // or any icon library
@@ -7,6 +7,9 @@ interface TransactionTableProps {
   transactions: Transaction[];
   onEditTransaction?: (transaction: Transaction) => void; // callback for editing
   deleteTransaction: (transactionId: number) => void; // callback for deleting
+  monthlySummary: Record<string, MonthlySummary>;
+  trendData: TrendData[];
+  distributionData: DistributionData[];
 }
 
 
@@ -14,12 +17,15 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
   transactions,
   onEditTransaction
   , deleteTransaction
+  , monthlySummary
+  , trendData
+  , distributionData
 }) => {
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
       <div className="px-6 py-4 border-b border-gray-200 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
         <h2 className="text-xl font-semibold text-gray-900">Recent Transactions</h2>
-        <ExportMenu transactions={transactions} />
+        <ExportMenu transactions={transactions} monthlySummary={monthlySummary} trendData={trendData} distributionData={distributionData} />
       </div>
 
       <div className="overflow-x-auto max-h-96">

@@ -13,6 +13,25 @@ export interface Transaction {
   notes: string;
 }
 
+export interface MonthlySummary {
+  income: number;
+  spending: number;
+  savings: number;
+  investing: number;
+}
+
+export interface TrendData {
+  month: string;
+  budget: number;
+  spent: number;
+}
+
+export interface DistributionData {
+  name: string;
+  limit: number;
+  spent: number;
+}
+
 // Helper function to format currency
 export const formatCurrency = (amount: number): string => {
   return `$${amount}`;
@@ -93,37 +112,107 @@ export const exportCSV = (transactions: Transaction[]) => {
   document.body.removeChild(link);
 };
 
-export const exportPDF = (transactions: Transaction[]) => {
+export const exportPDF = (
+  transactions: Transaction[],
+  monthlySummary: Record<string, MonthlySummary>,
+  trendData: TrendData[],
+  distributionData: DistributionData[]
+) => {
   const doc = new jsPDF();
 
   // Title
   doc.setFontSize(18);
-  doc.text("TrackPal - Transactions Report", 14, 20);
+  doc.text("TrackPal - Financial Report", 14, 20);
 
   // Date
   doc.setFontSize(11);
   doc.setTextColor(100);
   doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 28);
 
-  // Table rows
-  const tableColumn = ["Date", "Source", "Category", "Amount", "Notes"];
-  const tableRows: any[] = [];
+  let currentY = 35;
 
-  transactions.forEach((t) => {
-    tableRows.push([
-      t.date,
-      t.source,
-      t.category,
-      `$${t.amount}`,
-      t.notes || "",
-    ]);
+  // --- Monthly Summary ---
+  doc.setFontSize(14);
+  doc.setTextColor(0);
+  doc.text("Monthly Summary", 14, currentY);
+  currentY += 6;
+
+  Object.entries(monthlySummary).forEach(([month, summary]) => {
+    doc.setFontSize(11);
+    doc.text(
+      `${month}: Income: $${summary.income}, Spending: $${summary.spending}, Savings: $${summary.savings}, Investing: $${summary.investing}`,
+      14,
+      currentY
+    );
+    currentY += 6;
   });
 
-  // ✅ Now autoTable works
+  currentY += 4;
+
+  // --- Trend Data ---
+  doc.setFontSize(14);
+  doc.text("Trend Data", 14, currentY);
+  currentY += 6;
+
+  const trendColumns = ["Month", "Budget", "Spent"];
+  const trendRows = trendData.map((t) => [
+    t.month,
+    `$${t.budget}`,
+    `$${t.spent}`,
+  ]);
+
+  autoTable(doc, {
+    head: [trendColumns],
+    body: trendRows,
+    startY: currentY,
+    theme: "grid",
+    styles: { fontSize: 10 },
+  });
+
+  currentY = (doc as any).lastAutoTable.finalY + 4;
+
+  // --- Budget Distribution ---
+  doc.setFontSize(14);
+  doc.text("Budget Distribution", 14, currentY);
+  currentY += 6;
+
+  const distColumns = ["Category", "Limit", "Spent"];
+  const distRows = distributionData.map((d) => [
+    d.name,
+    `$${d.limit}`,
+    `$${d.spent}`,
+  ]);
+
+  autoTable(doc, {
+    head: [distColumns],
+    body: distRows,
+    startY: currentY,
+    theme: "grid",
+    styles: { fontSize: 10 },
+  });
+
+  currentY = (doc as any).lastAutoTable.finalY + 4;
+
+  // --- Transactions Table ---
+  doc.setFontSize(14);
+  doc.text("Transactions", 14, currentY);
+  currentY += 6;
+
+  const tableColumn = ["Date", "Source", "Category", "Amount", "Notes"];
+  const tableRows = transactions.map((t) => [
+    t.date.split("T")[0],
+    t.source,
+    t.category,
+    `$${t.amount}`,
+    t.notes || "",
+  ]);
+
   autoTable(doc, {
     head: [tableColumn],
     body: tableRows,
-    startY: 35,
+    startY: currentY,
+    theme: "grid",
+    styles: { fontSize: 10 },
   });
 
   // Save file

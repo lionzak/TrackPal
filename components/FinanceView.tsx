@@ -2,7 +2,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { useEffect, useState } from "react";
 import TransactionTable from "./TransactionTable";
 import DoughnutChart from "./DoughnutChart";
-import { fetchTrendData, formatDate, getMonthlyBudget, getSumByCategory, getTotalBalance, Transaction } from "@/utils/HelperFunc";
+import { fetchTrendData, formatDate, getMonthlyBudget, getMonthlySummary, getSumByCategory, getTotalBalance, Transaction } from "@/utils/HelperFunc";
 import TransactionFilter from "./TransactionFilter";
 import TransactionEditingModal from "./TransactionEditingModal";
 import FinancialCards from "./FinancialCards";
@@ -299,7 +299,12 @@ const FinanceView: React.FC = () => {
 
 
             {/* Recent Transactions */}
-            <TransactionTable transactions={filteredTransactions} onEditTransaction={handleEditTransaction} deleteTransaction={deleteTransaction} />
+            <TransactionTable transactions={filteredTransactions} onEditTransaction={handleEditTransaction} deleteTransaction={deleteTransaction} monthlySummary={getMonthlySummary(transactions)} trendData={trendData}
+                distributionData={budget.map(item => ({
+                    name: item.category,
+                    limit: item.budget,
+                    spent: budgetTotals[item.category] || 0,
+            }))} />
 
 
             {/* Financial Overview */}

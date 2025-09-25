@@ -17,7 +17,11 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-export async function GET() {
+export async function GET(req: Request) {
+  if (!req.headers.get("x-vercel-cron")) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     // Validate environment variables
     console.log("GMAIL_EMAIL:", process.env.GMAIL_EMAIL);

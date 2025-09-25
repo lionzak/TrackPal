@@ -3,6 +3,10 @@
     {
       "path": "/api/email-reminder",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/update_weekly_streak",
+      "schedule": "0 23 * * 0"
     }
   ]
 }

@@ -2,6 +2,9 @@
 
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { Typography, Button } from "@mui/material";
+import StreakTooltip from "./StreakTooltip";
+import { Info } from "lucide-react";
 
 interface StreakStats {
   weekly_streak_count: number;
@@ -44,9 +47,32 @@ export const WeeklyStreak = () => {
       <div className="flex items-center gap-4 mb-4">
         <span className="text-4xl">🔥</span>
         <div>
-          <h2 className="text-xl font-bold">
-            Current Weekly Streak
-          </h2>
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-bold">
+              Current Weekly Streak
+            </h2>
+            <StreakTooltip
+              title={
+                <React.Fragment>
+                  <Typography color="inherit">Weekly Streak Info</Typography>
+                  <em>{"Complete all your weekly goals to maintain your streak."}</em>
+                  <br />
+                  <strong>{"Rules:"}</strong>
+                  <ul style={{ margin: 0, paddingLeft: '18px', listStyleType: 'disc' }}>
+                    <li>{"Only goals created for the current week count."}</li>
+                    <li>{"All tasks must be marked 'done' to continue the streak."}</li>
+                    <li>{"If any goal is incomplete or missing, your streak resets to 0."}</li>
+                    <li>{"You need to add new goals each week to keep streaks going."}</li>
+                  </ul>
+                  <br />
+                  <em>{"Keep your streak going to build a habit and track your progress!"}</em>
+                </React.Fragment>
+              }
+
+            >
+              <Info size={18} className="cursor-pointer text-gray-500 ml-2" />
+            </StreakTooltip>
+          </div>
           <p className="text-gray-600">
             {streak.weekly_streak_count} week{streak.weekly_streak_count !== 1 ? "s" : ""}
           </p>
@@ -70,9 +96,8 @@ export const WeeklyStreak = () => {
         {Array.from({ length: MAX_STREAK_DISPLAY }).map((_, i) => (
           <span
             key={i}
-            className={`inline-block w-4 h-4 rounded-full ${
-              i < streak.weekly_streak_count ? "bg-yellow-400" : "bg-gray-200"
-            }`}
+            className={`inline-block w-4 h-4 rounded-full ${i < streak.weekly_streak_count ? "bg-yellow-400" : "bg-gray-200"
+              }`}
           />
         ))}
       </div>

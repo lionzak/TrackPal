@@ -461,3 +461,15 @@ export async function getWeeklyProgress() {
 
   return { completed, total };
 }
+
+export const getCurrentUser = async () => {
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+  if (error || !user) {
+    console.error(error);
+    return null;
+  }
+  return user;
+};

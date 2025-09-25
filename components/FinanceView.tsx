@@ -2,7 +2,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { useEffect, useState } from "react";
 import TransactionTable from "./TransactionTable";
 import DoughnutChart from "./DoughnutChart";
-import { fetchTrendData, formatDate, getMonthlyBudget, getMonthlySummary, getSumByCategory, getTotalBalance, Transaction } from "@/utils/HelperFunc";
+import { fetchTrendData, formatDate, getCurrentUser, getMonthlyBudget, getMonthlySummary, getSumByCategory, getTotalBalance, Transaction } from "@/utils/HelperFunc";
 import TransactionFilter from "./TransactionFilter";
 import TransactionEditingModal from "./TransactionEditingModal";
 import FinancialCards from "./FinancialCards";
@@ -49,16 +49,7 @@ const FinanceView: React.FC = () => {
 
     const [monthlyBudget, setMonthlyBudget] = useState<number>(0);
     const [monthlyBudgetInput, setMonthlyBudgetInput] = useState<string>("");   // ✅ input field
-
-    // --- Helper to get current user ---
-    const getCurrentUser = async () => {
-        const { data: { user }, error } = await supabase.auth.getUser();
-        if (error || !user) {
-            console.error(error);
-            return null;
-        }
-        return user;
-    };
+    
 
     // --- Fetch transactions from Supabase ---
     const fetchTransactions = async () => {

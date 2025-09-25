@@ -86,8 +86,6 @@ const WeeklyGoalsCards = ({ weeklyGoals, setEditingGoal, handleDeleteGoal, handl
                                                                 </svg>
                                                             )}
                                                         </span>
-
-
                                                     </label>
 
                                                     <span className={t.completed ? 'line-through text-green-700' : ''}>

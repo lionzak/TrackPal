@@ -15,3 +15,11 @@ export interface WeeklyGoal {
   priority: "low" | "medium" | "high"; // new
   deadline: string | null; // new
 }
+
+export interface DailyRoutineTask {
+  id: number; // allow temporary string IDs
+  title: string;
+  category: "growth" | "health" | "core" | "leisure";
+  completed: boolean;
+  created_at: string;
+}

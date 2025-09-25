@@ -273,24 +273,24 @@ const WeeklyGoalsView: React.FC = () => {
         <div className="space-y-4 sm:space-y-6 text-black">
             {/* Header */}
             <div className="flex flex-col sm:flex-row items-center gap-x-2 text-center self-center w-full">
-            <div className="flex flex-col sm:flex-row w-full justify-between items-center">
-                <h1 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2 sm:mb-0">
-                Weekly Goals 🎯
-                </h1>
-                <p className="text-gray-600 mb-2 sm:mb-0 sm:mx-4 w-full sm:w-auto text-center sm:text-left">
-                Quote of the day: &quot;{quote}&quot;
-                </p>
-                <button
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition hover:cursor-pointer"
-                onClick={() => setIsModalOpen(true)}
-                >
-                Add Goal
-                </button>
-            </div>
+                <div className="flex flex-col sm:flex-row w-full justify-between items-center">
+                    <h1 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2 sm:mb-0">
+                        Weekly Goals 🎯
+                    </h1>
+                    <p className="text-gray-600 mb-2 sm:mb-0 sm:mx-4 w-full sm:w-auto text-center sm:text-left">
+                        Quote of the day: &quot;{quote}&quot;
+                    </p>
+                    <button
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition hover:cursor-pointer"
+                        onClick={() => setIsModalOpen(true)}
+                    >
+                        Add Goal
+                    </button>
+                </div>
             </div>
 
             <div className='mb-10'>
-            <WeeklyProgressBar goals={weeklyGoals} />
+                <WeeklyProgressBar goals={weeklyGoals} />
             </div>
 
             {/* Streak */}
@@ -300,18 +300,18 @@ const WeeklyGoalsView: React.FC = () => {
 
             {/* Modals */}
             <AddWeeklyGoalModal
-            isOpen={isModalOpen}
-            onClose={() => setIsModalOpen(false)}
-            onSave={handleSaveGoal}
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onSave={handleSaveGoal}
             />
 
             {editingGoal && (
-            <EditWeeklyGoalModal
-                isOpen={!!editingGoal}
-                onClose={() => setEditingGoal(null)}
-                goal={editingGoal}
-                onSave={handleUpdateGoal}
-            />
+                <EditWeeklyGoalModal
+                    isOpen={!!editingGoal}
+                    onClose={() => setEditingGoal(null)}
+                    goal={editingGoal}
+                    onSave={handleUpdateGoal}
+                />
             )}
         </div>
     );

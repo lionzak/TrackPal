@@ -90,13 +90,35 @@ const WeeklyGoalsCards = ({ weeklyGoals, setEditingGoal, handleDeleteGoal, handl
 
                                                     </label>
 
-                                                    <span className={t.completed ? 'line-through text-gray-400' : ''}>
+                                                    <span className={t.completed ? 'line-through text-green-700' : ''}>
                                                         {t.title}
                                                     </span>
+
                                                 </li>
                                             ))}
 
                                         </ul>
+                                        {/** Progress Bar */}
+                                        <div className='mt-4'>
+                                            {(() => {
+                                                const totalTasks = goal.tasks.length;
+                                                const completedTasks = goal.tasks.filter(t => t.completed).length;
+                                                const progress = totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100);
+                                                const isAllFinished = completedTasks === totalTasks && totalTasks > 0;
+                                                return (
+                                                    <div className="w-full">
+                                                        <div className="bg-gray-200 rounded-full h-2 mt-1">
+                                                            <div
+                                                                className={`${isAllFinished ? 'bg-green-500' : 'bg-yellow-400'} h-2 rounded-full transition-all`}
+                                                                style={{ width: `${progress}%` }}
+                                                            ></div>
+                                                        </div>
+                                                        <p className="text-sm mt-1">{progress}% completed</p>
+                                                    </div>
+                                                );
+                                            })()}
+                                        </div>
+                                        {/** Deadline Info */}
                                         <div className='flex items-center justify-between mt-3'>
                                             {goal.deadline && (
                                                 <p className="flex items-center gap-1">

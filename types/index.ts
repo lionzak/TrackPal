@@ -22,4 +22,5 @@ export interface DailyRoutineTask {
   category: "growth" | "health" | "core" | "leisure";
   completed: boolean;
   created_at: string;
+  start_time: string | null; // new
 }

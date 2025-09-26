@@ -2,7 +2,6 @@ import { useTab } from "@/hooks/TabContext";
 import { supabase } from "@/lib/supabaseClient";
 import { DailyRoutineTask, WeeklyGoal } from "@/types";
 import { getCurrentUser, getMonthlyBudget, getSumByCategory, getThisWeekRange, getTotalBalance, Transaction } from "@/utils/HelperFunc";
-import { set } from "date-fns";
 import { useEffect, useState } from "react";
 
 interface AppProps {
@@ -16,7 +15,7 @@ const DashboardView: React.FC<AppProps> = ({ displayName }) => {
     const [monthlyBudget, setMonthlyBudget] = useState<number>(0);
     const [budgetTotals, setBudgetTotals] = useState<Record<string, number>>({});
     const [budget, setBudget] = useState<{ category: string; budget: number }[]>([]);
-
+    const [isLoading, setIsLoading] = useState<boolean>(true);
 
 
 
@@ -140,11 +139,14 @@ const DashboardView: React.FC<AppProps> = ({ displayName }) => {
     };
 
     useEffect(() => {
-        fetchTransactions();
-        fetchBudget();
-        fetchMonthlyBudget();
-        fetchDailyTasks();
-        fetchWeeklyGoals();
+        setIsLoading(true);
+        Promise.all([
+            fetchTransactions(),
+            fetchBudget(),
+            fetchMonthlyBudget(),
+            fetchDailyTasks(),
+            fetchWeeklyGoals()
+        ]).finally(() => setIsLoading(false));
     }, []);
 
     useEffect(() => {
@@ -153,12 +155,14 @@ const DashboardView: React.FC<AppProps> = ({ displayName }) => {
         }
     }, [transactions, budget]);
 
-
-    const monthlySpending = [
-        { month: "Sep", amount: 150.75 },
-        { month: "Aug", amount: 300.50 },
-        { month: "Jul", amount: 250.25 },
-    ];
+    if (isLoading) {
+        return (
+            <div className="flex justify-center items-center h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-500 border-solid"></div>
+                <span className="ml-4 text-lg text-gray-700">Loading...</span>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-4 sm:space-y-6">
@@ -181,8 +185,9 @@ const DashboardView: React.FC<AppProps> = ({ displayName }) => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                 <div className="p-5 bg-white shadow-lg w-full rounded-lg">
                     <p className="text-lg font-semibold text-black">Progress</p>
+                    {/** Daily Tasks Progress */}
                     <div className="mt-4">
-                        <div className="w-full bg-gray-200 rounded-full h-4 dark:bg-gray-700">
+                        <div className="w-full bg-gray-200 rounded-full h-4">
                             <div
                                 className="bg-blue-600 h-4 rounded-full"
                                 style={{
@@ -197,21 +202,45 @@ const DashboardView: React.FC<AppProps> = ({ displayName }) => {
                             {`${dailyTasks.filter(task => task.completed).length} of ${dailyTasks.length} daily tasks completed`}
                         </p>
                     </div>
+                    {/** Weekly Goals Progress */}
                     <div className="mt-4">
-                        <div className="w-full bg-gray-200 rounded-full h-4 dark:bg-gray-700">
+                        <div className="w-full bg-gray-200 rounded-full h-4">
                             <div
                                 className="bg-blue-600 h-4 rounded-full"
                                 style={{
-                                    width: `${weeklyGoals.length > 0
-                                        ? (weeklyGoals.filter(goal => goal.state === "done").length / weeklyGoals.length) * 100
-                                        : 0
+                                    width: `${(() => {
+                                            const totalTasks = weeklyGoals.reduce(
+                                                (sum, goal) => sum + (goal.tasks?.length || 0),
+                                                0
+                                            );
+                                            const completedTasks = weeklyGoals.reduce(
+                                                (sum, goal) => sum + (goal.tasks?.filter(task => task.completed).length || 0),
+                                                0
+                                            );
+                                            return totalTasks > 0
+                                                ? ((completedTasks / totalTasks) * 100).toFixed(0)
+                                                : 0;
+                                        })()
                                         }%`
                                 }}
                             ></div>
                         </div>
                         <p className="text-sm text-gray-600 mt-2">
                             {weeklyGoals.length > 0
-                                ? `${((weeklyGoals.filter(goal => goal.state === "done").length / weeklyGoals.length) * 100).toFixed(0)}% of your weekly tasks completed`
+                                ? (() => {
+                                    const totalTasks = weeklyGoals.reduce(
+                                        (sum, goal) => sum + (goal.tasks?.length || 0),
+                                        0
+                                    );
+                                    const completedTasks = weeklyGoals.reduce(
+                                        (sum, goal) => sum + (goal.tasks?.filter(task => task.completed).length || 0),
+                                        0
+                                    );
+                                    const percent = totalTasks > 0
+                                        ? ((completedTasks / totalTasks) * 100).toFixed(0)
+                                        : 0;
+                                    return `${percent}% of your weekly tasks completed`;
+                                })()
                                 : "0% of your weekly tasks completed"}
                         </p>
                     </div>

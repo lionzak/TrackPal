@@ -1,8 +1,9 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { DailyRoutineTask } from "@/types";
 import { toast } from "sonner";
+// import { LocalNotifications } from '@capacitor/local-notifications'; // COMMENTED OUT
 
 interface AddTaskModalProps {
     isOpen: boolean;
@@ -15,14 +16,39 @@ const categories = ["growth", "health", "core", "leisure"];
 const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onTaskAdded }) => {
     const [title, setTitle] = useState("");
     const [category, setCategory] = useState("growth");
+    const [startTime, setStartTime] = useState("");
     const [loading, setLoading] = useState(false);
 
+    // Request notification permissions on component mount
+    useEffect(() => {
+        /*
+        const requestPermissions = async () => {
+            const permStatus = await LocalNotifications.checkPermissions();
+            if (permStatus.display !== 'granted') {
+                const result = await LocalNotifications.requestPermissions();
+                if (result.display !== 'granted') {
+                    toast.warning("Notification permissions denied. Reminders won't work.");
+                }
+            }
+        };
+        if (isOpen) {
+            requestPermissions();
+        }
+        */
+    }, [isOpen]);
+
     const handleAddTask = async () => {
-        if (!title.trim()) return;
+        if (!title.trim()) {
+            toast.error("Please enter a task title.");
+            return;
+        }
 
         setLoading(true);
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
+        if (!user) {
+            toast.error("User not authenticated.");
+            return;
+        }
 
         const { data, error } = await supabase
             .from("daily_routine_tasks")
@@ -32,6 +58,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onTaskAdde
                     category,
                     user_id: user.id,
                     completed: false,
+                    start_time: startTime || null,
                 },
             ])
             .select()
@@ -39,9 +66,9 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onTaskAdde
 
         setLoading(false);
 
-
         if (error) {
             console.error("Error adding task:", error.message);
+            toast.error("Failed to add task.");
             return;
         }
 
@@ -49,9 +76,51 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onTaskAdde
             onTaskAdded(data as DailyRoutineTask);
             setTitle("");
             setCategory("growth");
+            setStartTime("");
             onClose();
+
+            // Schedule notification if startTime is provided
+            /*
+            if (data.start_time) {
+                const [hours, minutes] = data.start_time.split(':').map(Number);
+                if (isNaN(hours) || isNaN(minutes) || hours > 23 || minutes > 59) {
+                    console.error('Invalid start_time format:', data.start_time);
+                    toast.error("Invalid start time format.");
+                    return;
+                }
+
+                const now = new Date(); // e.g., Fri Sep 26 2025 16:08:00 EEST
+                const scheduledDate = new Date(now);
+                scheduledDate.setHours(hours, minutes, 0, 0);
+
+                // If time is in the past, schedule for tomorrow
+                if (scheduledDate <= now) {
+                    scheduledDate.setDate(scheduledDate.getDate() + 1);
+                }
+
+                try {
+                    await LocalNotifications.schedule({
+                        notifications: [
+                            {
+                                id: data.id, // Use task ID as notification ID
+                                title: `Trackpal Reminder: ${data.title}`,
+                                body: `It's time for your ${data.category} task. Let's keep the consistency going!`,
+                                schedule: { at: scheduledDate, allowWhileIdle: true },
+                            }
+                        ]
+                    });
+                    console.log(`Notification scheduled for task ${data.id} at ${scheduledDate.toLocaleString()}`);
+                    toast.success("Task and reminder added successfully!");
+                } catch (error) {
+                    console.error('Scheduling failed:', error);
+                    toast.error("Task added, but reminder failed to schedule. Check permissions.");
+                }
+            } else {
+                toast.success("Task added successfully!");
+            }
+            */
+            toast.success("Task added successfully!");
         }
-        toast.success("Task added successfully!");
     };
 
     if (!isOpen) return null;
@@ -83,6 +152,16 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onTaskAdde
                             </option>
                         ))}
                     </select>
+                    {/* Start Time input */}
+                    <label htmlFor="start-time" className="block text-sm font-medium text-gray-700">
+                        Start Time (optional)
+                    </label> 
+                    <input
+                        type="time"
+                        value={startTime}
+                        onChange={(e) => setStartTime(e.target.value)}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
                 </div>
 
                 {/* Actions */}

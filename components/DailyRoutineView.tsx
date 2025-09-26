@@ -273,12 +273,22 @@ const DailyRoutineView: React.FC = () => {
                                                 </span>
                                                 <div className="flex items-center">
                                                     {/* Task creation time */}
-                                                    <span className="text-sm text-gray-500 ml-4">
+                                                    <span className="text-xs text-gray-400 ml-4">
+                                                        <span className="mr-1">Created:</span>
                                                         {new Date(task.created_at).toLocaleTimeString([], {
                                                             hour: "2-digit",
                                                             minute: "2-digit",
                                                         })}
                                                     </span>
+                                                    {task.start_time && (
+                                                        <span className="text-xs text-blue-400 ml-4">
+                                                            <span className="mr-1">Start:</span>
+                                                            {new Date(`1970-01-01T${task.start_time}`).toLocaleTimeString([], {
+                                                                hour: "2-digit",
+                                                                minute: "2-digit",
+                                                            })}
+                                                        </span>
+                                                    )}
                                                     {/* Delete button */}
                                                     <button
                                                         onClick={() => handleTaskDelete(task.id)}

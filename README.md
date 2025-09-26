@@ -98,6 +98,9 @@ Note: Ensure Capacitor plugins (e.g., for storage, notifications) are configured
 
 ![Smart Insights Generated](public/Screenshots/fincance5.png)  
 
+## Minimal Report
+[TrackPal Impact Report](/report.html)
+
 ## Contributing
 
 Contributions are welcome! Please fork the repo, create a feature branch, and submit a pull request. Ensure code follows ESLint rules and tests pass.

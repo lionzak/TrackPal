@@ -99,7 +99,7 @@ Note: Ensure Capacitor plugins (e.g., for storage, notifications) are configured
 ![Smart Insights Generated](public/Screenshots/fincance5.png)  
 
 ## Minimal Report
-[TrackPal Impact Report](/report.html)
+[TrackPal Impact Report](/TrackPal_Impact_Report.pdf)
 
 ## Contributing
 
